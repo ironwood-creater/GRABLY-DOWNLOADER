@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grably: Video Downloader for TikTok, Instagram, Facebook, X &amp; Pinterest</title>
+  <meta name="description" content="Grably saves videos from TikTok, Instagram, Facebook, X and Pinterest in one tap. Copy a link, open the app, and it's detected automatically, ready to watch offline.">
+  <meta name="theme-color" content="#7B4DF8">
+
+  <!-- Social sharing. Once the site has a domain, make og:image an absolute URL (https://yourdomain.com/assets/img/og-image.png). -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Grably: Save any video in one tap">
+  <meta property="og:description" content="Download videos from TikTok, Instagram, Facebook, X and Pinterest. Paste a link or let Grably auto-detect it.">
+  <meta property="og:image" content="assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<!-- Icon sprite. Brand icons are from Simple Icons (CC0). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="ig-grad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#FEDA75"/><stop offset=".3" stop-color="#FA7E1E"/><stop offset=".6" stop-color="#D62976"/><stop offset=".85" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-tiktok" viewBox="0 0 24 24"><path fill="currentColor" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.440-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.820 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></symbol>
+  <symbol id="i-instagram" viewBox="0 0 24 24"><path fill="currentColor" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></symbol>
+  <symbol id="i-facebook" viewBox="0 0 24 24"><path fill="currentColor" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></symbol>
+  <symbol id="i-pinterest" viewBox="0 0 24 24"><path fill="currentColor" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.970 5.39 18.592.026 11.985.026L12.017 0z"/></symbol>
+  <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.090-3.623-2.324-4.390-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></symbol>
+  <symbol id="i-googleplay" viewBox="0 0 24 24"><path fill="currentColor" d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.040 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.230-3.210z"/></symbol>
+
+  <symbol id="i-logo" viewBox="0 0 100 100"><path d="M27 31.5 50 46.5 73 31.5V68.5L50 53.5 27 68.5Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></symbol>
+
+  <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></g></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></g></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></g></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M2.5 7.2a.8.8 0 0 1 1.3-.7l4.1 3.4 3.4-5.4a.8.8 0 0 1 1.4 0l3.4 5.4 4.1-3.4a.8.8 0 0 1 1.3.7l-1.6 10.1a1.5 1.5 0 0 1-1.5 1.3H5.6a1.5 1.5 0 0 1-1.5-1.3L2.5 7.2Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><g fill="currentColor"><path d="M12 2.5a6.5 6.5 0 0 0-6.5 6.5v3.6l-1.7 3a1 1 0 0 0 .9 1.4h14.6a1 1 0 0 0 .9-1.4l-1.7-3V9A6.5 6.5 0 0 0 12 2.5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0Z"/></g></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></g></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4"/><path d="M17 19h4"/></g></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></g></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21 3 17a2 2 0 0 1 0-2.8L13.2 4a2 2 0 0 1 2.8 0L20.9 9a2 2 0 0 1 0 2.8L11.6 21"/><path d="M7 21h14"/><path d="m6 11 7 7"/></g></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L21 10"/></g></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></g></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></g></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></g></symbol>
+  <symbol id="i-apps" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></g></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M10 9v6M14 9v6"/></g></symbol>
+  <symbol id="i-signal" viewBox="0 0 20 14"><g fill="currentColor"><rect x="0" y="9" width="3.4" height="5" rx="1"/><rect x="5.2" y="6.5" width="3.4" height="7.5" rx="1"/><rect x="10.4" y="3.5" width="3.4" height="10.5" rx="1"/><rect x="15.6" y="0" width="3.4" height="14" rx="1"/></g></symbol>
+  <symbol id="i-wifi" viewBox="0 0 20 14"><g fill="currentColor"><path d="M10 2.6c2.9 0 5.5 1.1 7.5 3l1.5-1.6A13 13 0 0 0 10 .4 13 13 0 0 0 1 4l1.5 1.6c2-1.9 4.6-3 7.5-3Z"/><path d="M10 6.8c1.8 0 3.4.7 4.6 1.8l1.5-1.6A8.7 8.7 0 0 0 10 4.6 8.7 8.7 0 0 0 3.9 7l1.5 1.6A6.6 6.6 0 0 1 10 6.8Z"/><path d="M10 9c-.9 0-1.8.4-2.4 1L10 13.6l2.4-3.6c-.6-.6-1.5-1-2.4-1Z"/></g></symbol>
+  <symbol id="i-battery" viewBox="0 0 28 14"><rect x=".75" y=".75" width="23.5" height="12.5" rx="3.6" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-width="1.5"/><rect x="2.6" y="2.6" width="19.8" height="8.8" rx="2" fill="currentColor"/><path d="M26 4.8v4.4a2.3 2.3 0 0 0 0-4.4Z" fill="currentColor" fill-opacity=".45"/></symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="container site-header__inner">
+    <a class="brand" href="#top" aria-label="Grably home">
+      <span class="brand__mark"><svg aria-hidden="true"><use href="#i-logo"/></svg></span>
+      <span class="brand__name">Grably</span>
+    </a>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <ul class="site-nav__list">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#premium">Premium</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a class="btn btn--primary btn--sm site-nav__cta" href="#download">Get the app</a>
+    </nav>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <svg class="nav-toggle__open" aria-hidden="true"><use href="#i-menu"/></svg>
+      <svg class="nav-toggle__close" aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="pill"><span class="pill__dot" aria-hidden="true"></span>One-click fast download</p>
+        <h1 class="hero__title">Save any video in <span class="hl">one&nbsp;tap</span>.</h1>
+        <p class="hero__lead">Grably downloads videos from TikTok, Instagram, Facebook, X and Pinterest. Copy a link, open the app, and it's detected automatically. Then watch offline whenever you like.</p>
+
+        <form class="checker" id="checker" novalidate>
+          <label class="checker__label" for="checker-input">Check a link: does Grably support it?</label>
+          <div class="checker__field">
+            <svg class="checker__icon" aria-hidden="true"><use href="#i-link"/></svg>
+            <input class="checker__input" id="checker-input" name="url" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your link here or auto-detect">
+            <button class="checker__paste" id="checker-paste" type="button">Paste</button>
+            <button class="checker__submit" type="submit" aria-label="Check link">
+              <svg aria-hidden="true"><use href="#i-download"/></svg>
+            </button>
+          </div>
+          <p class="checker__result" id="checker-result" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="store-row">
+          <a class="store-btn" href="#download" data-store="appStore">
+            <svg aria-hidden="true"><use href="#i-apple"/></svg>
+            <span><small>Download on the</small>App Store</span>
+          </a>
+          <a class="store-btn" href="#download" data-store="googlePlay">
+            <svg aria-hidden="true"><use href="#i-googleplay"/></svg>
+            <span><small>Get it on</small>Google Play</span>
+          </a>
+        </div>
+
+        <div class="works-with">
+          <ul class="works-with__icons" aria-hidden="true">
+            <li class="pf pf--tiktok"><svg><use href="#i-tiktok"/></svg></li>
+            <li class="pf pf--instagram"><svg><use href="#i-instagram"/></svg></li>
+            <li class="pf pf--facebook"><svg><use href="#i-facebook"/></svg></li>
+            <li class="pf pf--x"><svg><use href="#i-x"/></svg></li>
+            <li class="pf pf--pinterest"><svg><use href="#i-pinterest"/></svg></li>
+          </ul>
+          <p>Works with TikTok, Instagram, Facebook, X&nbsp;&amp;&nbsp;Pinterest</p>
+        </div>
+      </div>
+
+      <div class="hero__visual" role="img" aria-label="Three Grably app screens: the welcome screen, the home screen with a link field and recent downloads, and the downloads list.">
+        <!-- Left phone: onboarding -->
+        <div class="hero__phone hero__phone--left" aria-hidden="true">
+          <div class="phone">
+            <div class="phone__screen screen-onboard">
+              <span class="phone__island"></span>
+              <div class="statusbar statusbar--light"><span class="statusbar__time">9:41</span><span class="statusbar__icons"><svg class="sb-signal"><use href="#i-signal"/></svg><svg class="sb-wifi"><use href="#i-wifi"/></svg><svg class="sb-battery"><use href="#i-battery"/></svg></span></div>
+              <div class="onboard__stack">
+                <span class="onboard__card onboard__card--3 thumb thumb--bloom"></span>
+                <span class="onboard__card onboard__card--2 thumb thumb--ocean"></span>
+                <span class="onboard__card onboard__card--1 thumb thumb--sunset"></span>
+              </div>
+              <div class="onboard__curve"></div>
+              <span class="onboard__logo"><svg><use href="#i-logo"/></svg></span>
+              <div class="onboard__text">
+                <span class="onboard__tag">Grably</span>
+                <span class="onboard__title">All Videos Download</span>
+                <span class="onboard__sub">One-click fast download</span>
+                <span class="onboard__next"><svg><use href="#i-arrow-right"/></svg></span>
+                <span class="onboard__dots"><i class="is-active"></i><i></i><i></i></span>
+              </div>
+              <span class="phone__home"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center phone: home -->
+        <div class="hero__phone hero__phone--center" aria-hidden="true">
+          <div class="phone">
+            <div class="phone__screen screen-home">
+              <span class="phone__island"></span>
+              <div class="statusbar"><span class="statusbar__time">9:41</span><span class="statusbar__icons"><svg class="sb-signal"><use href="#i-signal"/></svg><svg class="sb-wifi"><use href="#i-wifi"/></svg><svg class="sb-battery"><use href="#i-battery"/></svg></span></div>
+
+              <div class="app-head">
+                <span class="avatar avatar--a"></span>
+                <span class="app-head__text"><b>Video Downloader</b><small>Download from any platform instantly</small></span>
+                <span class="round-btn"><svg><use href="#i-crown"/></svg></span>
+              </div>
+
+              <div class="app-field">
+                <span class="app-field__input"><svg><use href="#i-link"/></svg><span class="app-field__text" data-typing>Paste your link here or auto-detect</span></span>
+                <span class="app-field__btn"><svg><use href="#i-download"/></svg></span>
+              </div>
+              <span class="app-note">Reminder: Respect creators' work and intellectual property rights.</span>
+
+              <span class="app-divider"><span>Open Social App to Copy Link</span></span>
+              <div class="app-socials">
+                <span><i class="pf pf--tiktok"><svg><use href="#i-tiktok"/></svg></i>TikTok</span>
+                <span><i class="pf pf--instagram"><svg><use href="#i-instagram"/></svg></i>Instagram</span>
+                <span><i class="pf pf--facebook"><svg><use href="#i-facebook"/></svg></i>Facebook</span>
+                <span><i class="pf pf--x"><svg><use href="#i-x"/></svg></i>X</span>
+                <span><i class="pf pf--pinterest"><svg><use href="#i-pinterest"/></svg></i>Pinterest</span>
+              </div>
+
+              <div class="app-row"><b>Recently Downloaded</b><small>View all <svg><use href="#i-chevron-right"/></svg></small></div>
+              <div class="app-card">
+                <div class="app-card__head">
+                  <span class="avatar avatar--b"></span>
+                  <span class="app-card__who"><b>Ava Moreno</b><small>@ava.travels</small></span>
+                  <span class="app-card__acts"><svg><use href="#i-download"/></svg><svg><use href="#i-share"/></svg></span>
+                </div>
+                <div class="app-card__video thumb thumb--sunset"><span class="play"><svg><use href="#i-play"/></svg></span></div>
+              </div>
+              <div class="app-premium">
+                <span class="app-premium__icon"><svg><use href="#i-crown"/></svg></span>
+                <span><b>Premium Features</b><small>Remove watermarks, download audio, and unlock exclusive features</small></span>
+              </div>
+
+              <div class="screen-cta"><span>Download</span></div>
+              <span class="phone__home"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right phone: downloads -->
+        <div class="hero__phone hero__phone--right" aria-hidden="true">
+          <div class="phone">
+            <div class="phone__screen screen-downloads">
+              <span class="phone__island"></span>
+              <div class="statusbar"><span class="statusbar__time">9:41</span><span class="statusbar__icons"><svg class="sb-signal"><use href="#i-signal"/></svg><svg class="sb-wifi"><use href="#i-wifi"/></svg><svg class="sb-battery"><use href="#i-battery"/></svg></span></div>
+              <div class="dl-head">
+                <span class="round-btn"><svg><use href="#i-chevron-left"/></svg></span>
+                <b>Downloads</b>
+                <span class="round-btn"><svg><use href="#i-bell"/></svg></span>
+              </div>
+              <div class="seg"><span class="is-active">All</span><span>Complete</span><span>Failed</span></div>
+              <span class="dl-date">Today</span>
+              <ul class="dl-list">
+                <li class="dl-item">
+                  <span class="dl-item__thumb thumb thumb--sunset"></span>
+                  <span class="dl-item__body"><b>Golden Hour Drive</b><small>Coastal road trip filmed on a summer evening</small><span class="dl-item__meta"><em>5.2 / 8.9 MB</em><em>58%</em></span><span class="bar"><i style="width:58%"></i></span></span>
+                  <span class="dl-item__side"><svg class="dl-item__pause"><use href="#i-pause"/></svg><svg><use href="#i-more"/></svg></span>
+                </li>
+                <li class="dl-item">
+                  <span class="dl-item__thumb thumb thumb--city"></span>
+                  <span class="dl-item__body"><b>Night Market Tour</b><small>Ten street-food favorites in sixty seconds</small><span class="dl-item__meta"><em>19.2 MB</em></span></span>
+                  <span class="dl-item__side"><svg><use href="#i-more"/></svg></span>
+                </li>
+                <li class="dl-item">
+                  <span class="dl-item__thumb thumb thumb--studio"></span>
+                  <span class="dl-item__body"><b>Studio Session (Live)</b><small>Acoustic version recorded in one take</small><span class="dl-item__meta"><em>8.7 MB</em></span></span>
+                  <span class="dl-item__side"><svg><use href="#i-more"/></svg></span>
+                </li>
+              </ul>
+              <span class="dl-date">Yesterday</span>
+              <ul class="dl-list">
+                <li class="dl-item">
+                  <span class="dl-item__thumb thumb thumb--forest"></span>
+                  <span class="dl-item__body"><b>Morning Stretch</b><small>A ten-minute routine to start the day</small><span class="dl-item__meta is-failed"><em>3.1 / 6.4 MB</em><em>Failed</em></span><span class="bar bar--failed"><i style="width:48%"></i></span></span>
+                  <span class="dl-item__side"><svg class="dl-item__pause"><use href="#i-refresh"/></svg><svg><use href="#i-more"/></svg></span>
+                </li>
+              </ul>
+              <div class="screen-cta"><span>Download</span></div>
+              <span class="phone__home"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <header class="section-head" data-reveal>
+        <p class="eyebrow">How it works</p>
+        <h2>Three steps. That's it.</h2>
+        <p class="section-head__lead">No sign-in screens, no menus to dig through. If you can copy a link, you can use Grably.</p>
+      </header>
+
+      <ol class="steps">
+        <li class="step" data-reveal>
+          <div class="step__art" aria-hidden="true">
+            <div class="mini-share">
+              <span class="mini-share__title">Share to</span>
+              <span class="mini-share__row">
+                <i class="mini-share__bubble"></i><i class="mini-share__bubble"></i><i class="mini-share__bubble"></i><i class="mini-share__bubble"></i>
+              </span>
+              <span class="mini-share__copy"><svg><use href="#i-link"/></svg>Copy link</span>
+            </div>
+          </div>
+          <span class="step__num">01</span>
+          <h3>Copy the link</h3>
+          <p>Find a video you love in TikTok, Instagram, Facebook, X or Pinterest. Tap <strong>Share</strong>, then <strong>Copy link</strong>.</p>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step__art" aria-hidden="true">
+            <div class="mini-field">
+              <span class="mini-field__input"><svg><use href="#i-link"/></svg><span>tiktok.com/@ava.travels/vid…</span></span>
+              <span class="mini-field__chip"><svg><use href="#i-check"/></svg>TikTok link detected</span>
+            </div>
+          </div>
+          <span class="step__num">02</span>
+          <h3>Open Grably</h3>
+          <p>Grably spots the copied link and fills it in for you. Prefer to do it yourself? Paste it into the link field.</p>
+        </li>
+        <li class="step" data-reveal>
+          <div class="step__art" aria-hidden="true">
+            <div class="mini-done">
+              <span class="mini-done__thumb thumb thumb--sunset"><span class="play"><svg><use href="#i-play"/></svg></span></span>
+              <span class="mini-done__body"><b>Golden Hour Drive</b><span class="bar"><i class="bar__fill--anim"></i></span><small><svg><use href="#i-check"/></svg>Saved · 8.9 MB</small></span>
+            </div>
+          </div>
+          <span class="step__num">03</span>
+          <h3>Download &amp; watch</h3>
+          <p>Tap <strong>Download</strong>. The video lands in your library, ready to watch offline or share with a friend.</p>
+        </li>
+      </ol>
+
+      <div class="where" data-reveal>
+        <h3 class="where__title">Where to find the link</h3>
+        <ul class="where__grid">
+          <li class="where__item">
+            <span class="pf pf--tiktok pf--lg"><svg aria-hidden="true"><use href="#i-tiktok"/></svg></span>
+            <span><b>TikTok</b><small>Tap Share, then Copy link</small></span>
+          </li>
+          <li class="where__item">
+            <span class="pf pf--instagram pf--lg"><svg aria-hidden="true"><use href="#i-instagram"/></svg></span>
+            <span><b>Instagram</b><small>Tap the paper plane or ⋯, then Copy link</small></span>
+          </li>
+          <li class="where__item">
+            <span class="pf pf--facebook pf--lg"><svg aria-hidden="true"><use href="#i-facebook"/></svg></span>
+            <span><b>Facebook</b><small>Tap Share, then Copy link</small></span>
+          </li>
+          <li class="where__item">
+            <span class="pf pf--x pf--lg"><svg aria-hidden="true"><use href="#i-x"/></svg></span>
+            <span><b>X</b><small>Tap the share icon, then Copy link</small></span>
+          </li>
+          <li class="where__item">
+            <span class="pf pf--pinterest pf--lg"><svg aria-hidden="true"><use href="#i-pinterest"/></svg></span>
+            <span><b>Pinterest</b><small>Tap Share or ⋯, then Copy link</small></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="section section--tint" id="features">
+    <div class="container">
+      <header class="section-head" data-reveal>
+        <p class="eyebrow">Features</p>
+        <h2>Everything you need, nothing you don't.</h2>
+        <p class="section-head__lead">A clean, fast downloader built around one idea: getting the video you want onto your phone with as few taps as possible.</p>
+      </header>
+
+      <div class="bento">
+        <article class="tile tile--manager" data-reveal>
+          <div class="tile__copy">
+            <span class="tile__icon"><svg aria-hidden="true"><use href="#i-download"/></svg></span>
+            <h3>A download manager that keeps up</h3>
+            <p>See live progress, filter by <strong>All</strong>, <strong>Complete</strong> or <strong>Failed</strong>, and retry anything that didn't finish. Everything is grouped by day, so last week's clip is easy to find.</p>
+          </div>
+          <div class="manager" id="manager">
+            <div class="manager__tabs seg" role="group" aria-label="Filter downloads">
+              <button type="button" class="is-active" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="complete" aria-pressed="false">Complete</button>
+              <button type="button" data-filter="failed" aria-pressed="false">Failed</button>
+            </div>
+            <ul class="dl-list manager__list">
+              <li class="dl-item" data-status="progress" id="live-item">
+                <span class="dl-item__thumb thumb thumb--sunset"></span>
+                <span class="dl-item__body"><b>Golden Hour Drive</b><small>Coastal road trip filmed on a summer evening</small><span class="dl-item__meta"><em data-live-size>5.2 / 8.9 MB</em><em data-live-pct>58%</em></span><span class="bar"><i data-live-bar style="width:58%"></i></span></span>
+                <span class="dl-item__side"><svg class="dl-item__pause" aria-hidden="true"><use href="#i-pause"/></svg></span>
+              </li>
+              <li class="dl-item" data-status="complete">
+                <span class="dl-item__thumb thumb thumb--city"></span>
+                <span class="dl-item__body"><b>Night Market Tour</b><small>Ten street-food favorites in sixty seconds</small><span class="dl-item__meta"><em>19.2 MB</em><em class="is-ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Complete</em></span></span>
+                <span class="dl-item__side"><svg aria-hidden="true"><use href="#i-share"/></svg></span>
+              </li>
+              <li class="dl-item" data-status="complete">
+                <span class="dl-item__thumb thumb thumb--studio"></span>
+                <span class="dl-item__body"><b>Studio Session (Live)</b><small>Acoustic version recorded in one take</small><span class="dl-item__meta"><em>8.7 MB</em><em class="is-ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Complete</em></span></span>
+                <span class="dl-item__side"><svg aria-hidden="true"><use href="#i-share"/></svg></span>
+              </li>
+              <li class="dl-item" data-status="failed">
+                <span class="dl-item__thumb thumb thumb--forest"></span>
+                <span class="dl-item__body"><b>Morning Stretch</b><small>A ten-minute routine to start the day</small><span class="dl-item__meta is-failed"><em>3.1 / 6.4 MB</em><em>Failed</em></span><span class="bar bar--failed"><i style="width:48%"></i></span></span>
+                <span class="dl-item__side"><svg class="dl-item__pause" aria-hidden="true"><use href="#i-refresh"/></svg></span>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="tile" data-reveal>
+          <span class="tile__icon"><svg aria-hidden="true"><use href="#i-clipboard"/></svg></span>
+          <h3>Auto-detect links</h3>
+          <p>Copy a link anywhere. When you open Grably, it's already in the field and ready to go.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <span class="tile__icon"><svg aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <h3>One-click fast download</h3>
+          <p>One button, no format menus. Grably picks the best version and starts right away.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <span class="tile__icon"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
+          <h3>Watch &amp; share</h3>
+          <p>Play saved videos right in the app, offline, and send them to friends with a tap.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <span class="tile__icon"><svg aria-hidden="true"><use href="#i-calendar"/></svg></span>
+          <h3>Recent downloads, front and center</h3>
+          <p>Your latest saves sit on the home screen, with the creator's name and handle attached.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <span class="tile__icon"><svg aria-hidden="true"><use href="#i-apps"/></svg></span>
+          <h3>Shortcuts to your apps</h3>
+          <p>Jump into TikTok, Instagram, Facebook, X or Pinterest from Grably's home screen to grab a link.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PREMIUM ============ -->
+  <section class="section" id="premium">
+    <div class="container">
+      <div class="premium" data-reveal>
+        <div class="premium__copy">
+          <p class="premium__badge"><svg aria-hidden="true"><use href="#i-crown"/></svg>Grably Premium</p>
+          <h2>Want more? Go Premium.</h2>
+          <p>Upgrade from the crown button on the home screen to unlock Grably's extra tools.</p>
+        </div>
+        <ul class="premium__list">
+          <li>
+            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-eraser"/></svg></span>
+            <span><b>Remove watermarks</b><small>Keep your saved videos clean.</small></span>
+          </li>
+          <li>
+            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-music"/></svg></span>
+            <span><b>Download audio</b><small>Save just the sound: songs, podcasts, voiceovers.</small></span>
+          </li>
+          <li>
+            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-sparkle"/></svg></span>
+            <span><b>Exclusive features</b><small>Premium-only tools, added as they're released.</small></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESPECT CREATORS ============ -->
+  <section class="respect" aria-labelledby="respect-title">
+    <div class="container respect__inner" data-reveal>
+      <span class="respect__icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+      <div>
+        <h2 id="respect-title">Respect creators</h2>
+        <p>Grably is for saving videos for personal, offline viewing. Only download content you own or have permission to use, follow each platform's terms, and give credit when you share.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq">
+    <div class="container faq">
+      <header class="section-head section-head--left" data-reveal>
+        <p class="eyebrow">FAQ</p>
+        <h2>Questions, answered.</h2>
+        <p class="section-head__lead">Can't find what you're looking for? Reach out from the app's settings and we'll help.</p>
+      </header>
+
+      <div class="faq__list" data-reveal>
+        <details class="faq__item" open>
+          <summary>Which apps does Grably work with?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>TikTok, Instagram, Facebook, X and Pinterest. Copy a video's link from any of them and Grably will recognize it.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>How do I download a video?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>In the social app, tap <strong>Share → Copy link</strong>. Open Grably, and the link appears in the field automatically (or paste it yourself). Tap <strong>Download</strong> and you're done.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>What does "auto-detect" mean?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>When you open Grably, it checks whether you've just copied a supported video link and fills it in for you, saving you a step. Your phone may ask for permission to paste the first time.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>What happens if a download fails?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>It's moved to the <strong>Failed</strong> tab in Downloads, where you can retry it. A weak connection is the usual cause, so try again once you're back on Wi-Fi.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>Is Grably free?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>Grably is free to download and use. Premium is an optional upgrade that adds watermark removal, audio downloads and exclusive features.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>Can I download any video I want?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>Please only download videos you own or have permission to save, and follow the terms of the platform you're downloading from. Respect creators and their intellectual property.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="section section--cta" id="download">
+    <div class="container">
+      <div class="cta" data-reveal>
+        <div class="cta__copy">
+          <h2>Your next favorite video, saved.</h2>
+          <p>Get Grably on your phone and start downloading in seconds.</p>
+          <div class="store-row">
+            <a class="store-btn store-btn--light" href="#download" data-store="appStore">
+              <svg aria-hidden="true"><use href="#i-apple"/></svg>
+              <span><small>Download on the</small>App Store</span>
+            </a>
+            <a class="store-btn store-btn--light" href="#download" data-store="googlePlay">
+              <svg aria-hidden="true"><use href="#i-googleplay"/></svg>
+              <span><small>Get it on</small>Google Play</span>
+            </a>
+          </div>
+        </div>
+        <div class="cta__art" aria-hidden="true">
+          <span class="cta__ring cta__ring--1"></span>
+          <span class="cta__ring cta__ring--2"></span>
+          <span class="cta__logo"><svg><use href="#i-logo"/></svg></span>
+          <span class="cta__orb cta__orb--1 pf pf--tiktok"><svg><use href="#i-tiktok"/></svg></span>
+          <span class="cta__orb cta__orb--2 pf pf--instagram"><svg><use href="#i-instagram"/></svg></span>
+          <span class="cta__orb cta__orb--3 pf pf--facebook"><svg><use href="#i-facebook"/></svg></span>
+          <span class="cta__orb cta__orb--4 pf pf--x"><svg><use href="#i-x"/></svg></span>
+          <span class="cta__orb cta__orb--5 pf pf--pinterest"><svg><use href="#i-pinterest"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <a class="brand" href="#top" aria-label="Grably home">
+          <span class="brand__mark"><svg aria-hidden="true"><use href="#i-logo"/></svg></span>
+          <span class="brand__name">Grably</span>
+        </a>
+        <p>Save videos from your favorite apps in one tap.</p>
+      </div>
+      <nav class="site-footer__nav" aria-label="Footer">
+        <div>
+          <h3>Product</h3>
+          <ul>
+            <li><a href="#how-it-works">How it works</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#premium">Premium</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Get the app</h3>
+          <ul>
+            <li><a href="#download" data-store="appStore">App Store</a></li>
+            <li><a href="#download" data-store="googlePlay">Google Play</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="site-footer__bottom">
+      <p>© <span data-year>2026</span> Grably. All rights reserved.</p>
+      <p class="site-footer__legal">Grably is not affiliated with or endorsed by TikTok, Instagram, Facebook, X or Pinterest. All trademarks belong to their respective owners.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
