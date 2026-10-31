@@ -2,17 +2,6 @@
 (function () {
   'use strict';
 
-  /* ------------------------------------------------------------------
-   * Store links: paste your real listing URLs here.
-   * While a link is empty, its buttons show a "coming soon" message.
-   * ------------------------------------------------------------------ */
-  var STORE_LINKS = {
-    appStore: '',   // e.g. 'https://apps.apple.com/app/idXXXXXXXXXX'
-    googlePlay: ''  // e.g. 'https://play.google.com/store/apps/details?id=com.example.grably'
-  };
-
-  var STORE_NAMES = { appStore: 'the App Store', googlePlay: 'Google Play' };
-
   /* Platforms Grably supports, matched by hostname. */
   var PLATFORMS = [
     { name: 'TikTok', cls: 'tiktok', hosts: ['tiktok.com'] },
@@ -39,22 +28,6 @@
       setTimeout(function () { toastEl.hidden = true; }, 300);
     }, 3200);
   }
-
-  /* ---------- Store buttons ---------- */
-  document.querySelectorAll('[data-store]').forEach(function (link) {
-    var key = link.getAttribute('data-store');
-    var url = STORE_LINKS[key];
-    if (url) {
-      link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener';
-    } else {
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        toast('Grably is coming soon to ' + STORE_NAMES[key] + '.');
-      });
-    }
-  });
 
   /* ---------- Header: shadow on scroll + mobile menu ---------- */
   var header = document.querySelector('.site-header');
@@ -121,7 +94,7 @@
       result.classList.add('is-ok');
       result.innerHTML =
         '<span class="pf pf--' + p.cls + '"><svg aria-hidden="true"><use href="#i-' + p.cls + '"/></svg></span>' +
-        '<span><strong>' + p.name + ' link detected.</strong> Copy it, open Grably, and it\'ll be filled in for you automatically.</span>';
+        '<span><strong>' + p.name + ' is supported.</strong> Once Grably launches, copy a link like this, open the app, and it\'s filled in for you automatically.</span>';
     } else if (outcome.state === 'unsupported') {
       result.classList.add('is-error');
       result.innerHTML = '<span>Grably doesn\'t support <strong>' + escapeHtml(outcome.host) + '</strong> yet. It works with TikTok, Instagram, Facebook, X and Pinterest.</span>';
@@ -163,6 +136,13 @@
       }
     }
   }
+
+  /* Buttons elsewhere on the page that jump to the checker also focus it */
+  document.querySelectorAll('[data-focus-checker]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (input) setTimeout(function () { input.focus({ preventScroll: true }); }, reduceMotion ? 0 : 450);
+    });
+  });
 
   /* ---------- Reveal on scroll ---------- */
   var revealEls = document.querySelectorAll('[data-reveal]');
