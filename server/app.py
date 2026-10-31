@@ -16,6 +16,7 @@ import hashlib
 import hmac
 import logging
 import os
+import re
 import secrets
 import time
 from collections import defaultdict, deque
@@ -27,11 +28,12 @@ import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
+from starlette.middleware.gzip import DEFAULT_EXCLUDED_CONTENT_TYPES, GZipMiddleware
 
 from . import downloader
 
@@ -41,7 +43,9 @@ logging.basicConfig(level=os.environ.get("GRABLY_LOG_LEVEL", "INFO"))
 ROOT = Path(__file__).resolve().parent.parent
 SECRET = (os.environ.get("GRABLY_SECRET") or secrets.token_hex(32)).encode()
 TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "0").lower() in ("1", "true", "yes")
+PROXY_HOPS = max(1, int(os.environ.get("GRABLY_PROXY_HOPS", 1)))
 MAX_THUMB_BYTES = 5 * 1024 * 1024
+STALE_AFTER = 3 * 60 * 60  # seconds before an abandoned temp download folder is removed
 
 
 # --------------------------------------------------------------------------
@@ -53,19 +57,24 @@ class RateLimiter:
     def __init__(self, limit: int, window: float = 60.0):
         self.limit, self.window = limit, window
         self.hits: dict[str, deque] = defaultdict(deque)
+        self._next_sweep = time.monotonic() + window
 
     def allow(self, key: str) -> bool:
         now = time.monotonic()
+        if now >= self._next_sweep:
+            self._sweep(now)
         q = self.hits[key]
         while q and now - q[0] > self.window:
             q.popleft()
         if len(q) >= self.limit:
             return False
         q.append(now)
-        if len(self.hits) > 10_000:  # forget idle clients
-            for k in [k for k, v in self.hits.items() if not v]:
-                del self.hits[k]
         return True
+
+    def _sweep(self, now: float) -> None:
+        """Forget visitors with no recent requests, so memory doesn't grow forever."""
+        self.hits = defaultdict(deque, {k: q for k, q in self.hits.items() if q and now - q[-1] <= self.window})
+        self._next_sweep = now + self.window
 
 
 info_limit = RateLimiter(int(os.environ.get("GRABLY_INFO_PER_MIN", 30)))
@@ -75,9 +84,11 @@ download_slots = asyncio.Semaphore(int(os.environ.get("GRABLY_MAX_CONCURRENT", 3
 
 def client_ip(request: Request) -> str:
     if TRUST_PROXY:
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        # Each proxy appends the address it received the request from, so the trustworthy entry
+        # is counted from the right. The leftmost entries can be typed in by the visitor.
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
+        if len(hops) >= PROXY_HOPS:
+            return hops[-PROXY_HOPS]
     return request.client.host if request.client else "unknown"
 
 
@@ -90,7 +101,7 @@ def error(message: str, status: int) -> JSONResponse:
 # --------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    removed = downloader.cleanup_stale(max_age=3600)
+    removed = downloader.cleanup_stale(max_age=STALE_AFTER)
     if removed:
         log.info("removed %d leftover download folders", removed)
     yield
@@ -109,12 +120,28 @@ if origins:  # only needed when the website is hosted somewhere else than the AP
     )
 
 
+# Compress HTML, CSS, JS and JSON. Videos, audio, images and fonts are already compressed and are
+# skipped, which also keeps Content-Length on downloads so the progress bar works.
+app.add_middleware(
+    GZipMiddleware,
+    minimum_size=1000,
+    exclude_content_types=DEFAULT_EXCLUDED_CONTENT_TYPES + ("application/octet-stream",),
+)
+
+
 @app.middleware("http")
-async def security_headers(request: Request, call_next):
+async def response_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("X-Frame-Options", "DENY")
+    path = request.url.path
+    if path.startswith("/assets/") and response.status_code == 200:
+        if "v" in request.query_params or path.startswith("/assets/fonts/"):
+            # versioned CSS/JS (see render_index) and fonts never change at the same URL
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
 
@@ -126,6 +153,12 @@ async def grably_error(_request: Request, exc: downloader.GrablyError):
 @app.exception_handler(RequestValidationError)
 async def validation_error(_request: Request, _exc: RequestValidationError):
     return error("That request wasn't valid. Paste a video link and try again.", 400)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, _exc: Exception):
+    log.exception("unexpected error on %s", request.url.path)
+    return error("Something went wrong on our side. Please try again.", 500)
 
 
 def sign(value: str) -> str:
@@ -165,7 +198,7 @@ async def download(
     if download_slots.locked():
         return error("Grably is busy right now. Try again in a moment.", 503)
     # Sweep folders left behind by downloads that were cut off mid-transfer
-    await run_in_threadpool(downloader.cleanup_stale, 3600)
+    await run_in_threadpool(downloader.cleanup_stale, STALE_AFTER)
     async with download_slots:
         result = await run_in_threadpool(downloader.download, url, option)
     return FileResponse(
@@ -201,9 +234,26 @@ async def thumb(u: str = Query(max_length=4096), s: str = Query(max_length=64)):
 # --------------------------------------------------------------------------
 # Website (only index.html and /assets are public, not the server code)
 # --------------------------------------------------------------------------
-@app.get("/", include_in_schema=False)
+VERSIONED_ASSETS = ("assets/css/styles.css", "assets/js/main.js")
+_index_cache: dict = {}
+
+
+def render_index() -> str:
+    """index.html with ?v=<content hash> added to the CSS and JS links. Browsers can then cache
+    those files for a year and still get changes right away (the URL changes with the content)."""
+    key = tuple((ROOT / p).stat().st_mtime_ns for p in ("index.html", *VERSIONED_ASSETS))
+    if _index_cache.get("key") != key:
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        for rel in VERSIONED_ASSETS:
+            digest = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()[:10]
+            html = html.replace(f'"{rel}"', f'"{rel}?v={digest}"')
+        _index_cache.update(key=key, html=html)
+    return _index_cache["html"]
+
+
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 async def index():
-    return FileResponse(ROOT / "index.html")
+    return HTMLResponse(render_index(), headers={"Cache-Control": "no-cache"})
 
 
 app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")

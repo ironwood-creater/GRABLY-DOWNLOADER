@@ -18,11 +18,14 @@
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/styles.css">
-  <script>document.documentElement.classList.add('js');</script>
+  <script>
+    // Hide scroll-reveal content until main.js shows it. If main.js never runs, show everything after 4s.
+    document.documentElement.classList.add('js');
+    setTimeout(function () { if (!window.__grably) document.documentElement.classList.remove('js'); }, 4000);
+  </script>
 </head>
 <body>
 
@@ -413,7 +416,7 @@
             <ul class="dl-list manager__list">
               <li class="dl-item" data-status="progress" id="live-item">
                 <span class="dl-item__thumb thumb thumb--sunset"></span>
-                <span class="dl-item__body"><b>Golden Hour Drive</b><small>Coastal road trip filmed on a summer evening</small><span class="dl-item__meta"><em data-live-size>5.2 / 8.9 MB</em><em data-live-pct>58%</em></span><span class="bar"><i data-live-bar style="width:58%"></i></span></span>
+                <span class="dl-item__body"><b>Golden Hour Drive</b><small>Coastal road trip filmed on a summer evening</small><span class="dl-item__meta"><em data-live-size>5.2 / 8.9 MB</em><em data-live-pct>58%</em></span><span class="bar"><i class="is-scaled" data-live-bar style="transform:scaleX(.58)"></i></span></span>
                 <span class="dl-item__side"><svg class="dl-item__pause" aria-hidden="true"><use href="#i-pause"/></svg></span>
               </li>
               <li class="dl-item" data-status="complete">

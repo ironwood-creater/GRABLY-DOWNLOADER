@@ -30,6 +30,7 @@ index.html                 The page
 assets/css/styles.css      All styles (teal-on-navy theme variables at the top)
 assets/js/main.js          Downloader UI, mobile menu, demos
 assets/img/                Logo, favicon, Apple touch icon, social preview image
+assets/fonts/              Inter and Outfit, self-hosted (SIL Open Font License)
 server/app.py              Web server: API routes, rate limits, serves the website
 server/downloader.py       Link checks, yt-dlp lookup and download
 server/tests/              Tests (pytest)
@@ -96,10 +97,20 @@ Things to plan for:
 | `GRABLY_DOWNLOADS_PER_MIN` | `10` | Downloads per visitor per minute |
 | `GRABLY_MAX_CONCURRENT` | `3` | Downloads processed at the same time per server |
 | `GRABLY_TRUST_PROXY` | `0` (`1` in Docker) | Use `X-Forwarded-For` for visitor IPs; enable only behind a proxy you control |
+| `GRABLY_PROXY_HOPS` | `1` | How many proxies sit in front of the server (for example 2 for a CDN plus a load balancer). The visitor's IP is read that many entries from the right of `X-Forwarded-For`, which visitors can't fake |
 | `GRABLY_ALLOWED_ORIGINS` | none | Comma-separated origins allowed to call the API, if the website is hosted on a different domain |
 | `GRABLY_TMP` | system temp | Where temporary downloads are written |
 
 To host the website and the API on different domains, set `<meta name="grably-api" content="https://your-api.example.com">` in `index.html` and list the website's origin in `GRABLY_ALLOWED_ORIGINS`.
+
+## Performance
+
+The page is built to stay smooth (60 FPS) and load fast:
+
+- **Animations use the GPU.** Every animation moves only `transform` or `opacity`, so the browser never has to repaint the page to animate it. Endless animations pause when their section is off screen, and the demo animations stop while the browser tab is hidden.
+- **No work on scroll.** The header shadow and the scroll-reveal effects use `IntersectionObserver` instead of scroll listeners.
+- **Fast loading.** Fonts are self-hosted and preloaded, so there are no requests to Google and no render-blocking font stylesheet. The server compresses HTML, CSS, JS and JSON (gzip). CSS and JS links get a content hash (`?v=…`), so browsers cache them for a year and still pick up changes immediately.
+- **Font files never change at the same URL** (they're cached for a year). If you replace a font, give the file a new name.
 
 ## Before launch
 
@@ -115,7 +126,7 @@ Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the
 ## Customizing
 
 - **Colors**: the theme is teal on dark navy, from the logo. Edit the variables in `:root` at the top of `styles.css`: `--teal-500` (`#10B3A3`) is the accent and `--navy-900` (`#0B1A33`) the background. Buttons use navy text on teal, because white on teal is too low-contrast to read comfortably. App mockups keep a light palette, set in the block right after `:root`.
-- **Fonts**: Outfit (headings and mockups) and Inter (body), from Google Fonts.
+- **Fonts**: Outfit (headings and mockups) and Inter (body), self-hosted in `assets/fonts/` (Latin and Latin-Extended character sets).
 - **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `assets/js/main.js` (instant feedback in the browser). Keep them in sync.
 
 ## Credits

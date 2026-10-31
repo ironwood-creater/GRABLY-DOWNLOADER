@@ -1,6 +1,7 @@
 /* Grably: website behavior and the web downloader */
 (function () {
   'use strict';
+  window.__grably = true; // tells the fallback in index.html that this script loaded
 
   /* Platforms Grably supports, matched by hostname. */
   var PLATFORMS = [
@@ -20,8 +21,8 @@
     if (!toastEl) return;
     toastEl.textContent = message;
     toastEl.hidden = false;
-    // next frame so the transition runs
-    requestAnimationFrame(function () { toastEl.classList.add('is-shown'); });
+    // wait two frames so the starting state is rendered and the transition actually runs
+    requestAnimationFrame(function () { requestAnimationFrame(function () { toastEl.classList.add('is-shown'); }); });
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () {
       toastEl.classList.remove('is-shown');
@@ -34,9 +35,17 @@
   var nav = document.getElementById('site-nav');
   var toggle = document.querySelector('.nav-toggle');
 
-  function onScroll() { header.classList.toggle('is-scrolled', window.scrollY > 8); }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  // Header shadow once the page is scrolled. Watching a tiny marker at the top of the page
+  // means no code runs on every scroll event and nothing forces an extra layout.
+  var marker = document.createElement('div');
+  marker.setAttribute('aria-hidden', 'true');
+  marker.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:8px;pointer-events:none;';
+  document.body.prepend(marker);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      header.classList.toggle('is-scrolled', !entries[entries.length - 1].isIntersecting);
+    }).observe(marker);
+  }
 
   function setMenu(open) {
     toggle.setAttribute('aria-expanded', String(open));
@@ -90,16 +99,23 @@
     });
   }
 
-  var apiReady = (location.protocol === 'file:' && !API)
-    ? Promise.resolve(false)
-    : timeoutFetch(API + '/api/health', {}, 6000)
-        .then(function (res) { return res.ok ? res.json() : null; })
-        .then(function (body) { return !!(body && body.ok); })
-        .catch(function () { return false; });
+  var noServer = location.protocol === 'file:' && !API;
+  var defaultLabel = label ? label.textContent : '';
 
-  apiReady.then(function (ok) {
-    if (!ok && label) label.textContent = 'Check a link: does Grably support it?';
-  });
+  function checkApi() {
+    if (noServer) return Promise.resolve(false);
+    return timeoutFetch(API + '/api/health', {}, 6000)
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (body) { return !!(body && body.ok); })
+      .catch(function () { return false; });
+  }
+
+  function setApiState(ok) {
+    if (label) label.textContent = ok ? defaultLabel : 'Check a link: does Grably support it?';
+    return ok;
+  }
+
+  var apiReady = checkApi().then(setApiState);
 
   function detect(raw) {
     var text = raw.trim();
@@ -158,6 +174,7 @@
   function fmtSize(bytes) {
     if (!bytes) return '';
     var mb = bytes / 1048576;
+    if (mb < 1) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
     if (mb >= 1000) return (mb / 1024).toFixed(1) + ' GB';
     if (mb >= 10) return Math.round(mb) + ' MB';
     return mb.toFixed(1) + ' MB';
@@ -165,6 +182,7 @@
 
   var busy = false;
   var current = null;
+  var activeDownload = null; // AbortController of the download in progress
 
   function setLoading(on) {
     busy = on;
@@ -175,8 +193,11 @@
   }
 
   function hideCard() {
+    // Closing or replacing the card cancels its download, so an old file can't save later
+    if (activeDownload) { activeDownload.abort(); activeDownload = null; }
     current = null;
     card.hidden = true;
+    card.className = 'dl-card';
     card.innerHTML = '';
   }
 
@@ -200,9 +221,9 @@
       '<div class="dl-card__body">' +
         '<p class="dl-card__meta">' + platformIcon(escapeHtml(data.platform)) +
           '<span>' + escapeHtml(data.platform_name) + (data.uploader ? ' · ' + escapeHtml(data.uploader) : '') + '</span></p>' +
-        '<h3 class="dl-card__title">' + escapeHtml(data.title) + '</h3>' +
+        '<h2 class="dl-card__title">' + escapeHtml(data.title) + '</h2>' +
         '<div class="dl-card__options" role="group" aria-label="Choose a quality to download">' + options + '</div>' +
-        '<div class="dl-card__status" role="status" aria-live="polite"><span class="bar"><i></i></span><small></small></div>' +
+        '<div class="dl-card__status" role="status" aria-live="polite"><span class="bar"><i class="is-scaled"></i></span><small></small></div>' +
         '<p class="dl-card__note">Only download videos you have the right to save.</p>' +
       '</div>';
     card.className = 'dl-card';
@@ -264,22 +285,27 @@
   }
 
   function startDownload(btn) {
-    if (!current || card.classList.contains('is-busy')) return;
+    if (!current || activeDownload) return;
+    var controller = new AbortController();
+    activeDownload = controller;
+    function isCurrent() { return activeDownload === controller; }
+
     var buttons = card.querySelectorAll('.dl-opt');
     var bar = card.querySelector('.dl-card__status .bar');
     var fill = bar.querySelector('i');
     var text = card.querySelector('.dl-card__status small');
+    function setProgress(fraction) { fill.style.transform = 'scaleX(' + fraction + ')'; }
 
     buttons.forEach(function (b) { b.disabled = true; });
     btn.classList.add('is-active');
     card.classList.remove('is-done', 'is-failed');
     card.classList.add('is-busy');
     bar.classList.add('is-indeterminate');
-    fill.style.width = '';
+    setProgress(0);
     text.textContent = 'Preparing your video… this can take a few seconds.';
 
     var params = new URLSearchParams({ url: current.url, option: btn.getAttribute('data-option') });
-    fetch(API + '/api/download?' + params.toString())
+    fetch(API + '/api/download?' + params.toString(), { signal: controller.signal })
       .then(function (res) {
         if (!res.ok) return readError(res).then(function (msg) { throw new ApiError(msg); });
         var total = Number(res.headers.get('Content-Length')) || 0;
@@ -292,35 +318,45 @@
         var reader = res.body.getReader();
         var chunks = [];
         var received = 0;
+        var lastUpdate = 0;
         return (function pump() {
           return reader.read().then(function (step) {
             if (step.done) return { blob: new Blob(chunks, { type: type }), name: name };
             chunks.push(step.value);
             received += step.value.length;
-            if (total) {
-              var pct = Math.min(100, Math.round((received / total) * 100));
-              fill.style.width = pct + '%';
-              text.textContent = 'Downloading… ' + pct + '% (' + fmtSize(received) + ' of ' + fmtSize(total) + ')';
-            } else {
-              text.textContent = 'Downloading… ' + fmtSize(received);
+            // Chunks can arrive hundreds of times a second; update the screen at most 10 times a second
+            var now = performance.now();
+            if (now - lastUpdate > 100) {
+              lastUpdate = now;
+              if (total) {
+                var fraction = Math.min(1, received / total);
+                setProgress(fraction);
+                text.textContent = 'Downloading… ' + Math.round(fraction * 100) + '% (' + fmtSize(received) + ' of ' + fmtSize(total) + ')';
+              } else {
+                text.textContent = 'Downloading… ' + fmtSize(received);
+              }
             }
             return pump();
           });
         })();
       })
       .then(function (out) {
+        if (!isCurrent()) return;
         saveBlob(out.blob, out.name);
-        fill.style.width = '100%';
+        setProgress(1);
         card.classList.add('is-done');
         text.innerHTML = icon('check') + '<span>Saved to your Downloads folder as “' + escapeHtml(out.name) + '”.</span>';
       })
       .catch(function (err) {
+        if (!isCurrent()) return; // cancelled: the card was closed or replaced
         card.classList.add('is-failed');
         bar.classList.remove('is-indeterminate');
-        fill.style.width = '0';
+        setProgress(0);
         text.textContent = err instanceof ApiError ? err.message : 'The download was interrupted. Please try again.';
       })
       .finally(function () {
+        if (!isCurrent()) return;
+        activeDownload = null;
         card.classList.remove('is-busy');
         btn.classList.remove('is-active');
         buttons.forEach(function (b) { b.disabled = false; });
@@ -331,6 +367,8 @@
     var outcome = detect(text);
     if (outcome.state !== 'ok') { hideCard(); explain(outcome); return; }
     if (busy) return;
+    // If the server was unreachable earlier (say, a network blip), ask again before giving up
+    apiReady = apiReady.then(function (ok) { return ok || checkApi().then(setApiState); });
     apiReady.then(function (ok) {
       if (ok) lookup(text.trim());
       else { hideCard(); explain(outcome); }
@@ -400,6 +438,14 @@
     revealEls.forEach(function (el) { el.classList.add('is-visible'); });
   }
 
+  /* ---------- Pause endless animations while their section is off screen ---------- */
+  if ('IntersectionObserver' in window) {
+    var scopeObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { entry.target.classList.toggle('is-offscreen', !entry.isIntersecting); });
+    });
+    document.querySelectorAll('.hero, .cta, .site-footer').forEach(function (el) { scopeObserver.observe(el); });
+  }
+
   /* ---------- Download manager demo: filter tabs ---------- */
   var manager = document.getElementById('manager');
   if (manager) {
@@ -433,11 +479,12 @@
     var timer;
 
     function paint() {
-      bar.style.width = progress + '%';
+      bar.style.transform = 'scaleX(' + progress / 100 + ')';
       pct.textContent = progress + '%';
       size.textContent = (total * progress / 100).toFixed(1) + ' / ' + total + ' MB';
     }
     function tick() {
+      if (document.hidden) { timer = setTimeout(tick, 1000); return; }
       progress = Math.min(100, progress + 2 + Math.round(Math.random() * 3));
       paint();
       if (progress >= 100) {
@@ -450,32 +497,52 @@
     // Only animate while the demo is on screen
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entries) {
-        var visible = entries[0].isIntersecting;
+        var visible = entries[entries.length - 1].isIntersecting;
         if (visible && !running) { running = true; tick(); }
         else if (!visible && running) { running = false; clearTimeout(timer); }
       }).observe(live);
     }
   }
 
-  /* ---------- Hero phone: "auto-detect" typing effect ---------- */
+  /* ---------- Hero phone: "auto-detect" typing effect ----------
+   * Only runs while the phone is on screen and the tab is visible. */
   var typing = document.querySelector('[data-typing]');
   if (typing && !reduceMotion) {
     var placeholder = typing.textContent;
     var demoLink = 'tiktok.com/@ava.travels/video/7311';
-    var cycle = function () {
-      var i = 0;
-      typing.classList.add('is-typed');
-      (function type() {
-        typing.textContent = demoLink.slice(0, ++i);
-        if (i < demoLink.length) setTimeout(type, 45);
-        else setTimeout(function () {
-          typing.classList.remove('is-typed');
-          typing.textContent = placeholder;
-          setTimeout(cycle, 2600);
-        }, 2600);
-      })();
+    var typed = 0;
+    var inView = false;
+    var typingTimer = null;
+    var typingActive = function () { return inView && !document.hidden; };
+    var typeStep = function () {
+      typingTimer = null;
+      if (!typingActive()) return;
+      if (typed < demoLink.length) {
+        typed += 1;
+        typing.textContent = demoLink.slice(0, typed);
+        typing.classList.add('is-typed');
+        typingTimer = setTimeout(typeStep, typed === demoLink.length ? 2600 : 45);
+      } else {
+        typed = 0;
+        typing.classList.remove('is-typed');
+        typing.textContent = placeholder;
+        typingTimer = setTimeout(typeStep, 2600);
+      }
     };
-    setTimeout(cycle, 1400);
+    var updateTyping = function () {
+      if (typingActive() && !typingTimer) typingTimer = setTimeout(typeStep, 900);
+      if (!typingActive() && typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    };
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        inView = entries[entries.length - 1].isIntersecting;
+        updateTyping();
+      }).observe(typing.closest('.phone') || typing);
+    } else {
+      inView = true;
+      updateTyping();
+    }
+    document.addEventListener('visibilitychange', updateTyping);
   }
 
   /* ---------- Footer year ---------- */

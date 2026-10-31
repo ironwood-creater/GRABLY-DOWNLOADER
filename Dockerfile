@@ -22,4 +22,5 @@ ENV PORT=8000 \
     PYTHONUNBUFFERED=1
 EXPOSE 8000
 
-CMD ["sh", "-c", "exec uvicorn server.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]
+# Visitor IPs for rate limiting come from X-Forwarded-For (see GRABLY_TRUST_PROXY / GRABLY_PROXY_HOPS)
+CMD ["sh", "-c", "exec uvicorn server.app:app --host 0.0.0.0 --port ${PORT} --no-server-header"]
