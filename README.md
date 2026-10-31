@@ -19,7 +19,8 @@ It's a static site: plain HTML, CSS and JavaScript with no build step and no dep
 index.html            The page
 assets/css/styles.css All styles (brand colors are CSS variables at the top)
 assets/js/main.js     Link checker, mobile menu, store links, demos
-assets/img/logo.svg   App logo (also used as favicon.svg)
+assets/img/logo.svg   App logo: teal G on navy (also used as favicon.svg)
+assets/img/apple-touch-icon.png  180×180 icon for iPhone home-screen bookmarks
 assets/img/og-image.png  1200×630 preview image for social sharing
 ```
 
@@ -42,7 +43,7 @@ Then visit http://localhost:8000.
 
 ## Customizing
 
-- **Colors**: edit the variables in `:root` at the top of `styles.css`. `--purple-500` is the brand purple.
+- **Colors**: edit the variables in `:root` at the top of `styles.css`. `--purple-500` is the brand purple; `--logo-bg` (navy `#0B1A33`) and `--logo-fg` (teal `#10B3A3`) color the logo mark.
 - **Fonts**: Outfit (headings and app mockups) and Inter (body), loaded from Google Fonts in `index.html`.
 - **Supported platforms**: the link checker's list lives in `PLATFORMS` in `main.js`.
 
