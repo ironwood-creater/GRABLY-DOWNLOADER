@@ -3,15 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Grably: Video Downloader for TikTok, Instagram, Facebook, X &amp; Pinterest</title>
-  <meta name="description" content="Grably saves videos from TikTok, Instagram, Facebook, X and Pinterest in one tap. Copy a link, open the app, and it's detected automatically. Coming soon to iPhone and Android.">
+  <title>Grably: Download Videos from TikTok, Instagram, Facebook, X &amp; Pinterest</title>
+  <meta name="description" content="Download videos from TikTok, Instagram, Facebook, X and Pinterest on your laptop, PC or Mac. Paste a link, pick a quality, and it's saved. Phone app coming soon.">
+  <!-- Where the download API lives. Leave empty when this page is served by the Grably server (server/app.py). -->
+  <meta name="grably-api" content="">
   <meta name="theme-color" content="#0B1A33">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 
   <!-- Social sharing. Once the site has a domain, make og:image an absolute URL (https://yourdomain.com/assets/img/og-image.png). -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Grably: Save any video in one tap">
-  <meta property="og:description" content="Download videos from TikTok, Instagram, Facebook, X and Pinterest. Paste a link or let Grably auto-detect it.">
+  <meta property="og:title" content="Grably: Download any video in one tap">
+  <meta property="og:description" content="Download videos from TikTok, Instagram, Facebook, X and Pinterest on any laptop, PC or Mac. Paste a link, pick a quality, done.">
   <meta property="og:image" content="assets/img/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
 
@@ -59,6 +61,9 @@
   <symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></g></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></g></symbol>
   <symbol id="i-apps" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></g></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/></g></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></g></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></g></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -80,11 +85,12 @@
     <nav class="site-nav" id="site-nav" aria-label="Main">
       <ul class="site-nav__list">
         <li><a href="#how-it-works">How it works</a></li>
-        <li><a href="#features">Features</a></li>
+        <li><a href="#computer">On your computer</a></li>
+        <li><a href="#features">App</a></li>
         <li><a href="#premium">Premium</a></li>
         <li><a href="#faq">FAQ</a></li>
       </ul>
-      <a class="btn btn--ghost btn--sm site-nav__cta" href="#launch"><span class="dot" aria-hidden="true"></span>Coming soon</a>
+      <a class="btn btn--primary btn--sm site-nav__cta" href="#checker" data-focus-checker><svg aria-hidden="true"><use href="#i-download"/></svg>Download a video</a>
     </nav>
 
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
@@ -101,22 +107,24 @@
     <div class="hero__glow" aria-hidden="true"></div>
     <div class="container hero__inner">
       <div class="hero__copy">
-        <p class="pill"><span class="dot" aria-hidden="true"></span>Coming soon to iPhone &amp; Android</p>
-        <h1 class="hero__title">Save any video in <span class="hl">one&nbsp;tap</span>.</h1>
-        <p class="hero__lead">Grably downloads videos from TikTok, Instagram, Facebook, X and Pinterest. Copy a link, open the app, and it's detected automatically. Then watch offline whenever you like.</p>
+        <p class="pill"><span class="dot" aria-hidden="true"></span>Now on the web · Phone app coming soon</p>
+        <h1 class="hero__title">Download any video in <span class="hl">one&nbsp;click</span>.</h1>
+        <p class="hero__lead">Save videos from TikTok, Instagram, Facebook, X and Pinterest right in your browser, on any laptop, PC or Mac. Paste a link, pick a quality, done. Nothing to install.</p>
 
         <form class="checker" id="checker" novalidate>
-          <label class="checker__label" for="checker-input">Check a link: does Grably support it?</label>
+          <label class="checker__label" for="checker-input">Paste a video link to download it</label>
           <div class="checker__field">
             <svg class="checker__icon" aria-hidden="true"><use href="#i-link"/></svg>
-            <input class="checker__input" id="checker-input" name="url" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your link here or auto-detect">
+            <input class="checker__input" id="checker-input" name="url" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a video link here">
             <button class="checker__paste" id="checker-paste" type="button">Paste</button>
-            <button class="checker__submit" type="submit" aria-label="Check link">
+            <button class="checker__submit" type="submit" aria-label="Get video">
               <svg aria-hidden="true"><use href="#i-download"/></svg>
             </button>
           </div>
           <p class="checker__result" id="checker-result" role="status" aria-live="polite"></p>
+          <noscript><p class="checker__result">Turn on JavaScript to download videos.</p></noscript>
         </form>
+        <div class="dl-card" id="dl-card" hidden></div>
 
 
         <div class="works-with">
@@ -252,13 +260,65 @@
     </div>
   </section>
 
+  <!-- ============ ON YOUR COMPUTER ============ -->
+  <section class="section computer" id="computer">
+    <div class="container computer__inner">
+      <div class="computer__copy" data-reveal>
+        <p class="eyebrow">On your computer</p>
+        <h2>Made for your laptop, PC and Mac.</h2>
+        <p class="section-head__lead">No app to install and no account to create. Open Grably in your browser, paste a link, and the video lands in your Downloads folder.</p>
+        <ul class="computer__list">
+          <li>
+            <span class="computer__icon"><svg aria-hidden="true"><use href="#i-laptop"/></svg></span>
+            <span><b>Works in any browser</b><small>Chrome, Safari, Edge and Firefox on Windows, macOS, ChromeOS and Linux.</small></span>
+          </li>
+          <li>
+            <span class="computer__icon"><svg aria-hidden="true"><use href="#i-sliders"/></svg></span>
+            <span><b>Pick your quality</b><small>Choose from the resolutions the video was posted in, with the file size shown up front.</small></span>
+          </li>
+          <li>
+            <span class="computer__icon"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
+            <span><b>Plays everywhere</b><small>Videos save as MP4, ready for QuickTime, Photos, VLC or Windows Media Player.</small></span>
+          </li>
+        </ul>
+        <a class="btn btn--primary" href="#checker" data-focus-checker>Download a video<svg aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+      </div>
+
+      <div class="laptop" aria-hidden="true" data-reveal>
+        <div class="laptop__screen">
+          <div class="browser">
+            <div class="browser__bar">
+              <span class="browser__dots"><i></i><i></i><i></i></span>
+              <span class="browser__url"><svg><use href="#i-lock"/></svg>grably</span>
+            </div>
+            <div class="browser__page">
+              <div class="browser__brand"><span class="brand__mark"><svg><use href="#i-logo"/></svg></span>Grably</div>
+              <div class="browser__field"><svg><use href="#i-link"/></svg><span>instagram.com/reel/C8xQ2m…</span><span class="browser__go"><svg><use href="#i-download"/></svg></span></div>
+              <div class="browser__card">
+                <span class="browser__thumb thumb thumb--ocean"><span class="play"><svg><use href="#i-play"/></svg></span></span>
+                <span class="browser__info">
+                  <span class="browser__meta"><i class="pf pf--instagram"><svg><use href="#i-instagram"/></svg></i>Instagram · 0:38</span>
+                  <b>Sunrise surf session</b>
+                  <span class="browser__opts"><span class="is-primary">MP4 · 1080p</span><span>720p</span><span>480p</span></span>
+                  <span class="bar"><i class="bar__fill--anim"></i></span>
+                  <span class="browser__done"><svg><use href="#i-check"/></svg>Saved to Downloads</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="laptop__base"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ HOW IT WORKS ============ -->
   <section class="section" id="how-it-works">
     <div class="container">
       <header class="section-head" data-reveal>
         <p class="eyebrow">How it works</p>
         <h2>Three steps. That's it.</h2>
-        <p class="section-head__lead">No sign-in screens, no menus to dig through. If you can copy a link, you can use Grably.</p>
+        <p class="section-head__lead">No sign-up, no menus to dig through. If you can copy a link, you can use Grably, on your computer or your phone.</p>
       </header>
 
       <ol class="steps">
@@ -284,8 +344,8 @@
             </div>
           </div>
           <span class="step__num">02</span>
-          <h3>Open Grably</h3>
-          <p>Grably spots the copied link and fills it in for you. Prefer to do it yourself? Paste it into the link field.</p>
+          <h3>Paste it into Grably</h3>
+          <p>Paste the link into the box at the top of this page. In the app, Grably spots the copied link and fills it in for you.</p>
         </li>
         <li class="step" data-reveal>
           <div class="step__art" aria-hidden="true">
@@ -295,8 +355,8 @@
             </div>
           </div>
           <span class="step__num">03</span>
-          <h3>Download &amp; watch</h3>
-          <p>Tap <strong>Download</strong>. The video lands in your library, ready to watch offline or share with a friend.</p>
+          <h3>Pick a quality &amp; download</h3>
+          <p>Choose the quality you want. The video saves straight to your Downloads folder, ready to watch offline or share.</p>
         </li>
       </ol>
 
@@ -332,9 +392,9 @@
   <section class="section section--tint" id="features">
     <div class="container">
       <header class="section-head" data-reveal>
-        <p class="eyebrow">Features</p>
-        <h2>Everything you need, nothing you don't.</h2>
-        <p class="section-head__lead">A clean, fast downloader built around one idea: getting the video you want onto your phone with as few taps as possible.</p>
+        <p class="eyebrow">The Grably app · Coming soon</p>
+        <h2>Even better on your phone.</h2>
+        <p class="section-head__lead">The Grably app for iPhone and Android is on its way, with a full download manager, automatic link detection and more.</p>
       </header>
 
       <div class="bento">
@@ -415,7 +475,7 @@
         <div class="premium__copy">
           <p class="premium__badge"><svg aria-hidden="true"><use href="#i-crown"/></svg>Grably Premium</p>
           <h2>Want more? Go Premium.</h2>
-          <p>Upgrade from the crown button on the home screen to unlock Grably's extra tools.</p>
+          <p>When the app launches, upgrade from the crown button on the home screen to unlock Grably's extra tools.</p>
         </div>
         <ul class="premium__list">
           <li>
@@ -452,33 +512,33 @@
       <header class="section-head section-head--left" data-reveal>
         <p class="eyebrow">FAQ</p>
         <h2>Questions, answered.</h2>
-        <p class="section-head__lead">Everything you need to know before Grably launches.</p>
+        <p class="section-head__lead">Everything you need to know about downloading with Grably.</p>
       </header>
 
       <div class="faq__list" data-reveal>
         <details class="faq__item" open>
-          <summary>When can I get Grably?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>Soon. Grably isn't on the App Store or Google Play yet, but it's on its way to both. Check back here for the launch.</p></div>
+          <summary>Can I use Grably on my laptop or computer?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>Yes. Paste a link into the box at the top of this page and pick a quality. It works in Chrome, Safari, Edge and Firefox on Windows, Mac, Chromebook and Linux, with nothing to install.</p></div>
+        </details>
+        <details class="faq__item">
+          <summary>Where do my downloads go?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>To your browser's Downloads folder, as an MP4 file that plays in QuickTime, Photos, VLC or Windows Media Player.</p></div>
         </details>
         <details class="faq__item">
           <summary>Which apps does Grably work with?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>TikTok, Instagram, Facebook, X and Pinterest. Copy a video's link from any of them and Grably will recognize it.</p></div>
+          <div class="faq__a"><p>TikTok, Instagram, Facebook, X and Pinterest. Copy a video's link from any of them and paste it into Grably.</p></div>
         </details>
         <details class="faq__item">
-          <summary>How do I download a video?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>In the social app, tap <strong>Share → Copy link</strong>. Open Grably, and the link appears in the field automatically (or paste it yourself). Tap <strong>Download</strong> and you're done.</p></div>
+          <summary>Why can't I download some videos?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>Private videos, videos that need a login to watch, and posts that have been removed can't be downloaded. Make sure the link points to a single public video.</p></div>
         </details>
         <details class="faq__item">
-          <summary>What does "auto-detect" mean?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>When you open Grably, it checks whether you've just copied a supported video link and fills it in for you, saving you a step. Your phone may ask for permission to paste the first time.</p></div>
-        </details>
-        <details class="faq__item">
-          <summary>What happens if a download fails?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>It's moved to the <strong>Failed</strong> tab in Downloads, where you can retry it. A weak connection is the usual cause, so try again once you're back on Wi-Fi.</p></div>
+          <summary>When is the phone app coming?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
+          <div class="faq__a"><p>Soon. The Grably app is on its way to the App Store and Google Play. Until then, this website works in your phone's browser too.</p></div>
         </details>
         <details class="faq__item">
           <summary>Is Grably free?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>Grably will be free to download and use. Premium will be an optional upgrade that adds watermark removal, audio downloads and exclusive features.</p></div>
+          <div class="faq__a"><p>The website is free to use. The app will be free to download, with an optional Premium upgrade for watermark removal, audio downloads and exclusive features.</p></div>
         </details>
         <details class="faq__item">
           <summary>Can I download any video I want?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
@@ -494,9 +554,9 @@
       <div class="cta" data-reveal>
         <div class="cta__copy">
           <p class="cta__badge"><span class="dot" aria-hidden="true"></span>Launching soon</p>
-          <h2>Grably is almost here.</h2>
-          <p>We're putting the finishing touches on the app. It's coming soon to the App Store and Google Play.</p>
-          <a class="btn btn--dark" href="#checker" data-focus-checker>Check if your links are supported<svg aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <h2>The Grably app is almost here.</h2>
+          <p>We're putting the finishing touches on the app for the App Store and Google Play. Until then, download videos right here in your browser.</p>
+          <a class="btn btn--dark" href="#checker" data-focus-checker>Download a video now<svg aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="cta__art" aria-hidden="true">
           <span class="cta__ring cta__ring--1"></span>
@@ -522,14 +582,16 @@
           <span class="brand__name">Grably</span>
         </a>
         <p>Save videos from your favorite apps in one tap.</p>
-        <p class="site-footer__soon"><span class="dot" aria-hidden="true"></span>Coming soon to the App Store &amp; Google Play</p>
+        <p class="site-footer__soon"><span class="dot" aria-hidden="true"></span>Phone app coming soon to the App Store &amp; Google Play</p>
       </div>
       <nav class="site-footer__nav" aria-label="Footer">
         <div>
           <h3>Product</h3>
           <ul>
+            <li><a href="#checker" data-focus-checker>Download a video</a></li>
             <li><a href="#how-it-works">How it works</a></li>
-            <li><a href="#features">Features</a></li>
+            <li><a href="#computer">On your computer</a></li>
+            <li><a href="#features">The app</a></li>
             <li><a href="#premium">Premium</a></li>
             <li><a href="#faq">FAQ</a></li>
           </ul>

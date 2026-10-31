@@ -1,0 +1,6 @@
+# Grably web server
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+httpx==0.28.1
+# yt-dlp needs regular updates as sites change; keep it current (see README)
+yt-dlp[default,curl-cffi]>=2026.10.26

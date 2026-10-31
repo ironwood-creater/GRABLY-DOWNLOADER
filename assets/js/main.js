@@ -1,4 +1,4 @@
-/* Grably: marketing site behavior */
+/* Grably: website behavior and the web downloader */
 (function () {
   'use strict';
 
@@ -56,11 +56,50 @@
     if (nav.classList.contains('is-open') && !e.target.closest('.site-header')) setMenu(false);
   });
 
-  /* ---------- Link checker ---------- */
+  /* ---------- Web downloader ----------
+   * Paste a link -> POST /api/info -> show title, thumbnail and qualities ->
+   * GET /api/download -> save the file. If the API can't be reached (for example
+   * when the page is opened as a plain file), it falls back to checking links only.
+   */
   var form = document.getElementById('checker');
   var input = document.getElementById('checker-input');
   var result = document.getElementById('checker-result');
   var pasteBtn = document.getElementById('checker-paste');
+  var card = document.getElementById('dl-card');
+  var submitBtn = form && form.querySelector('.checker__submit');
+  var label = form && form.querySelector('.checker__label');
+
+  var apiMeta = document.querySelector('meta[name="grably-api"]');
+  var API = ((apiMeta && apiMeta.content) || '').trim().replace(/\/+$/, '');
+
+  function ApiError(message) { this.message = message; }
+
+  function timeoutFetch(url, options, ms) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, ms);
+    return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+      .finally(function () { clearTimeout(timer); });
+  }
+
+  function readError(res) {
+    return res.json().catch(function () { return null; }).then(function (body) {
+      if (body && body.error) return body.error;
+      if (res.status === 429) return 'You\'re going a bit fast. Wait a minute and try again.';
+      if (res.status === 503) return 'Grably is busy right now. Try again in a moment.';
+      return 'Something went wrong. Please try again.';
+    });
+  }
+
+  var apiReady = (location.protocol === 'file:' && !API)
+    ? Promise.resolve(false)
+    : timeoutFetch(API + '/api/health', {}, 6000)
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (body) { return !!(body && body.ok); })
+        .catch(function () { return false; });
+
+  apiReady.then(function (ok) {
+    if (!ok && label) label.textContent = 'Check a link: does Grably support it?';
+  });
 
   function detect(raw) {
     var text = raw.trim();
@@ -82,42 +121,243 @@
   }
 
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, function (c) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
 
-  function render(outcome) {
+  function icon(id) { return '<svg aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  function platformIcon(cls) { return '<span class="pf pf--' + cls + '">' + icon(cls) + '</span>'; }
+
+  function setMessage(html, kind) {
     result.classList.remove('is-ok', 'is-error');
-    if (outcome.state === 'ok') {
-      var p = outcome.platform;
-      result.classList.add('is-ok');
-      result.innerHTML =
-        '<span class="pf pf--' + p.cls + '"><svg aria-hidden="true"><use href="#i-' + p.cls + '"/></svg></span>' +
-        '<span><strong>' + p.name + ' is supported.</strong> Once Grably launches, copy a link like this, open the app, and it\'s filled in for you automatically.</span>';
-    } else if (outcome.state === 'unsupported') {
-      result.classList.add('is-error');
-      result.innerHTML = '<span>Grably doesn\'t support <strong>' + escapeHtml(outcome.host) + '</strong> yet. It works with TikTok, Instagram, Facebook, X and Pinterest.</span>';
+    if (kind) result.classList.add(kind);
+    result.innerHTML = html || '';
+  }
+
+  function explain(outcome) {
+    if (outcome.state === 'unsupported') {
+      setMessage('<span>Grably doesn\'t support <strong>' + escapeHtml(outcome.host) + '</strong> yet. It works with TikTok, Instagram, Facebook, X and Pinterest.</span>', 'is-error');
     } else if (outcome.state === 'invalid') {
-      result.classList.add('is-error');
-      result.innerHTML = '<span>That doesn\'t look like a link. In the social app, tap <strong>Share → Copy link</strong>, then paste it here.</span>';
+      setMessage('<span>That doesn\'t look like a link. In the social app, tap <strong>Share → Copy link</strong>, then paste it here.</span>', 'is-error');
+    } else if (outcome.state === 'empty') {
+      setMessage('<span>Paste a video link first. Try one from TikTok, Instagram, Facebook, X or Pinterest.</span>', 'is-error');
     } else {
-      result.classList.add('is-error');
-      result.innerHTML = '<span>Paste a video link first. Try one from TikTok, Instagram, Facebook, X or Pinterest.</span>';
+      // Supported link, but the download server isn't reachable
+      setMessage(platformIcon(outcome.platform.cls) + '<span><strong>' + outcome.platform.name + ' is supported</strong>, but downloads aren\'t available right now. Please try again later.</span>');
     }
+  }
+
+  function fmtDuration(s) {
+    if (s == null) return '';
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+    var mm = h ? String(m).padStart(2, '0') : String(m);
+    return (h ? h + ':' : '') + mm + ':' + String(sec).padStart(2, '0');
+  }
+
+  function fmtSize(bytes) {
+    if (!bytes) return '';
+    var mb = bytes / 1048576;
+    if (mb >= 1000) return (mb / 1024).toFixed(1) + ' GB';
+    if (mb >= 10) return Math.round(mb) + ' MB';
+    return mb.toFixed(1) + ' MB';
+  }
+
+  var busy = false;
+  var current = null;
+
+  function setLoading(on) {
+    busy = on;
+    submitBtn.classList.toggle('is-loading', on);
+    submitBtn.disabled = on;
+    submitBtn.setAttribute('aria-label', on ? 'Finding video' : 'Get video');
+    input.readOnly = on;
+  }
+
+  function hideCard() {
+    current = null;
+    card.hidden = true;
+    card.innerHTML = '';
+  }
+
+  function showCard(data) {
+    current = data;
+    var duration = fmtDuration(data.duration);
+    var options = (data.options || []).map(function (o, i) {
+      return '<button type="button" class="dl-opt' + (i === 0 ? ' dl-opt--primary' : '') + '" data-option="' + escapeHtml(o.id) + '">' +
+        icon(o.kind === 'audio' ? 'music' : 'download') +
+        '<span>' + escapeHtml(o.format + ' · ' + o.quality) + '</span>' +
+        (o.size ? '<small>~' + fmtSize(o.size) + '</small>' : '') +
+        '</button>';
+    }).join('');
+
+    card.innerHTML =
+      '<button type="button" class="dl-card__close" aria-label="Clear and start over">' + icon('close') + '</button>' +
+      '<div class="dl-card__media">' +
+        (data.thumbnail ? '<img src="' + escapeHtml(API + data.thumbnail) + '" alt="" loading="lazy" decoding="async">' : '') +
+        (duration ? '<span class="dl-card__dur">' + duration + '</span>' : '') +
+      '</div>' +
+      '<div class="dl-card__body">' +
+        '<p class="dl-card__meta">' + platformIcon(escapeHtml(data.platform)) +
+          '<span>' + escapeHtml(data.platform_name) + (data.uploader ? ' · ' + escapeHtml(data.uploader) : '') + '</span></p>' +
+        '<h3 class="dl-card__title">' + escapeHtml(data.title) + '</h3>' +
+        '<div class="dl-card__options" role="group" aria-label="Choose a quality to download">' + options + '</div>' +
+        '<div class="dl-card__status" role="status" aria-live="polite"><span class="bar"><i></i></span><small></small></div>' +
+        '<p class="dl-card__note">Only download videos you have the right to save.</p>' +
+      '</div>';
+    card.className = 'dl-card';
+    card.hidden = false;
+
+    var img = card.querySelector('img');
+    if (img) img.addEventListener('error', function () { img.remove(); });
+    var first = card.querySelector('.dl-opt');
+    if (first) first.focus({ preventScroll: true });
+    if (card.getBoundingClientRect().bottom > window.innerHeight) {
+      card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+    }
+  }
+
+  function lookup(text) {
+    setLoading(true);
+    hideCard();
+    setMessage('<span>Finding your video…</span>');
+    timeoutFetch(API + '/api/info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: text })
+    }, 60000)
+      .then(function (res) {
+        if (!res.ok) return readError(res).then(function (msg) { throw new ApiError(msg); });
+        return res.json();
+      })
+      .then(function (data) {
+        setMessage('');
+        showCard(data);
+      })
+      .catch(function (err) {
+        var msg = err instanceof ApiError ? err.message
+          : err && err.name === 'AbortError' ? 'That took too long. Please try again.'
+          : 'Couldn\'t reach Grably. Check your connection and try again.';
+        setMessage('<span>' + escapeHtml(msg) + '</span>', 'is-error');
+      })
+      .finally(function () { setLoading(false); });
+  }
+
+  function filenameFrom(disposition) {
+    if (!disposition) return null;
+    var star = /filename\*\s*=\s*utf-8''([^;]+)/i.exec(disposition);
+    if (star) { try { return decodeURIComponent(star[1].trim()); } catch (e) { /* fall through */ } }
+    var plain = /filename\s*=\s*"?([^";]+)"?/i.exec(disposition);
+    return plain ? plain[1] : null;
+  }
+
+  function saveBlob(blob, name) {
+    var href = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = href;
+    a.download = name;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(href); }, 60000);
+  }
+
+  function startDownload(btn) {
+    if (!current || card.classList.contains('is-busy')) return;
+    var buttons = card.querySelectorAll('.dl-opt');
+    var bar = card.querySelector('.dl-card__status .bar');
+    var fill = bar.querySelector('i');
+    var text = card.querySelector('.dl-card__status small');
+
+    buttons.forEach(function (b) { b.disabled = true; });
+    btn.classList.add('is-active');
+    card.classList.remove('is-done', 'is-failed');
+    card.classList.add('is-busy');
+    bar.classList.add('is-indeterminate');
+    fill.style.width = '';
+    text.textContent = 'Preparing your video… this can take a few seconds.';
+
+    var params = new URLSearchParams({ url: current.url, option: btn.getAttribute('data-option') });
+    fetch(API + '/api/download?' + params.toString())
+      .then(function (res) {
+        if (!res.ok) return readError(res).then(function (msg) { throw new ApiError(msg); });
+        var total = Number(res.headers.get('Content-Length')) || 0;
+        var type = res.headers.get('Content-Type') || 'application/octet-stream';
+        var name = filenameFrom(res.headers.get('Content-Disposition')) || 'grably-video.mp4';
+        bar.classList.remove('is-indeterminate');
+        if (!res.body || !res.body.getReader) {
+          return res.blob().then(function (blob) { return { blob: blob, name: name }; });
+        }
+        var reader = res.body.getReader();
+        var chunks = [];
+        var received = 0;
+        return (function pump() {
+          return reader.read().then(function (step) {
+            if (step.done) return { blob: new Blob(chunks, { type: type }), name: name };
+            chunks.push(step.value);
+            received += step.value.length;
+            if (total) {
+              var pct = Math.min(100, Math.round((received / total) * 100));
+              fill.style.width = pct + '%';
+              text.textContent = 'Downloading… ' + pct + '% (' + fmtSize(received) + ' of ' + fmtSize(total) + ')';
+            } else {
+              text.textContent = 'Downloading… ' + fmtSize(received);
+            }
+            return pump();
+          });
+        })();
+      })
+      .then(function (out) {
+        saveBlob(out.blob, out.name);
+        fill.style.width = '100%';
+        card.classList.add('is-done');
+        text.innerHTML = icon('check') + '<span>Saved to your Downloads folder as “' + escapeHtml(out.name) + '”.</span>';
+      })
+      .catch(function (err) {
+        card.classList.add('is-failed');
+        bar.classList.remove('is-indeterminate');
+        fill.style.width = '0';
+        text.textContent = err instanceof ApiError ? err.message : 'The download was interrupted. Please try again.';
+      })
+      .finally(function () {
+        card.classList.remove('is-busy');
+        btn.classList.remove('is-active');
+        buttons.forEach(function (b) { b.disabled = false; });
+      });
+  }
+
+  function handle(text) {
+    var outcome = detect(text);
+    if (outcome.state !== 'ok') { hideCard(); explain(outcome); return; }
+    if (busy) return;
+    apiReady.then(function (ok) {
+      if (ok) lookup(text.trim());
+      else { hideCard(); explain(outcome); }
+    });
   }
 
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      render(detect(input.value));
+      handle(input.value);
     });
     input.addEventListener('paste', function () {
-      // Check right after the pasted text lands in the field
-      setTimeout(function () { render(detect(input.value)); }, 0);
+      // Start right after the pasted text lands in the field
+      setTimeout(function () { if (detect(input.value).state === 'ok') handle(input.value); }, 0);
     });
     input.addEventListener('input', function () {
-      if (!input.value.trim()) { result.textContent = ''; result.classList.remove('is-ok', 'is-error'); }
+      if (!input.value.trim()) { setMessage(''); hideCard(); }
+    });
+    card.addEventListener('click', function (e) {
+      var opt = e.target.closest('.dl-opt');
+      if (opt && !opt.disabled) { startDownload(opt); return; }
+      if (e.target.closest('.dl-card__close')) {
+        hideCard();
+        setMessage('');
+        input.value = '';
+        input.focus();
+      }
     });
 
     if (pasteBtn) {
@@ -127,7 +367,7 @@
         pasteBtn.addEventListener('click', function () {
           navigator.clipboard.readText().then(function (text) {
             input.value = text.trim();
-            render(detect(input.value));
+            handle(input.value);
           }).catch(function () {
             input.focus();
             toast('Press ' + (/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl') + '+V to paste your link.');
@@ -137,7 +377,7 @@
     }
   }
 
-  /* Buttons elsewhere on the page that jump to the checker also focus it */
+  /* Buttons elsewhere on the page that jump to the downloader also focus it */
   document.querySelectorAll('[data-focus-checker]').forEach(function (link) {
     link.addEventListener('click', function () {
       if (input) setTimeout(function () { input.focus({ preventScroll: true }); }, reduceMotion ? 0 : 450);
