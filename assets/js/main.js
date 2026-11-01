@@ -443,65 +443,7 @@
     var scopeObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) { entry.target.classList.toggle('is-offscreen', !entry.isIntersecting); });
     });
-    document.querySelectorAll('.hero, .cta, .site-footer').forEach(function (el) { scopeObserver.observe(el); });
-  }
-
-  /* ---------- Download manager demo: filter tabs ---------- */
-  var manager = document.getElementById('manager');
-  if (manager) {
-    var tabs = manager.querySelectorAll('[data-filter]');
-    var items = manager.querySelectorAll('.dl-item');
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        var filter = tab.getAttribute('data-filter');
-        tabs.forEach(function (t) {
-          var active = t === tab;
-          t.classList.toggle('is-active', active);
-          t.setAttribute('aria-pressed', String(active));
-        });
-        items.forEach(function (item) {
-          var status = item.getAttribute('data-status');
-          item.hidden = !(filter === 'all' || status === filter);
-        });
-      });
-    });
-  }
-
-  /* ---------- Download manager demo: live progress ---------- */
-  var live = document.getElementById('live-item');
-  if (live && !reduceMotion) {
-    var bar = live.querySelector('[data-live-bar]');
-    var pct = live.querySelector('[data-live-pct]');
-    var size = live.querySelector('[data-live-size]');
-    var total = 8.9;
-    var progress = 58;
-    var running = false;
-    var timer;
-
-    function paint() {
-      bar.style.transform = 'scaleX(' + progress / 100 + ')';
-      pct.textContent = progress + '%';
-      size.textContent = (total * progress / 100).toFixed(1) + ' / ' + total + ' MB';
-    }
-    function tick() {
-      if (document.hidden) { timer = setTimeout(tick, 1000); return; }
-      progress = Math.min(100, progress + 2 + Math.round(Math.random() * 3));
-      paint();
-      if (progress >= 100) {
-        pct.textContent = 'Done';
-        timer = setTimeout(function () { progress = 4; paint(); timer = setTimeout(tick, 600); }, 1800);
-      } else {
-        timer = setTimeout(tick, 260);
-      }
-    }
-    // Only animate while the demo is on screen
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (entries) {
-        var visible = entries[entries.length - 1].isIntersecting;
-        if (visible && !running) { running = true; tick(); }
-        else if (!visible && running) { running = false; clearTimeout(timer); }
-      }).observe(live);
-    }
+    document.querySelectorAll('.hero, .site-footer').forEach(function (el) { scopeObserver.observe(el); });
   }
 
   /* ---------- Hero phone: "auto-detect" typing effect ----------

@@ -146,11 +146,11 @@ If you host the page without the Python server, put the two IDs in the `grably-a
 1. **Terms of use and takedown contact**: a public downloader should have terms of use and a way for rights holders to reach you (for example a DMCA/copyright contact). Have these reviewed by someone qualified.
 2. **Privacy policy**: `privacy.html` describes what this website does (links aren't stored, files are deleted after download, IP addresses are only used briefly for rate limiting, and Google AdSense cookies). Add your contact email, have it reviewed, and update it if you change how the site works. The phone app will need its own policy for the App Store and Google Play.
 3. **Domain**: once you have one, change `og:image` in `index.html` to an absolute URL (for example `https://yourdomain.com/assets/img/og-image.png`) so link previews work.
-4. **Copy review**: check the FAQ and the "free" section against how the site and app actually behave.
+4. **Copy review**: check the FAQ against how the site and app actually behave.
 
 ## When the phone app launches
 
-Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the launch section (`#launch`), the footer line under the logo, and the FAQ entry "When is the phone app coming?". The original App Store / Google Play buttons are in this repository's history (commit `72d094f`).
+Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the footer line under the logo, and the FAQ entry "When is the phone app coming?". The original App Store / Google Play buttons are in this repository's history (commit `72d094f`).
 
 ## Customizing
 
