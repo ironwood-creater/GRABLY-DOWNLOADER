@@ -10,8 +10,7 @@ WORKDIR /app
 COPY server/requirements.txt server/requirements.txt
 RUN pip install --no-cache-dir -r server/requirements.txt
 
-COPY index.html ./
-COPY assets ./assets
+COPY public ./public
 COPY server ./server
 
 RUN useradd --create-home grably

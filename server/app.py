@@ -41,6 +41,7 @@ log = logging.getLogger("grably")
 logging.basicConfig(level=os.environ.get("GRABLY_LOG_LEVEL", "INFO"))
 
 ROOT = Path(__file__).resolve().parent.parent
+PUBLIC = ROOT / "public"  # everything the website serves (pages, CSS, JS, fonts, images)
 SECRET = (os.environ.get("GRABLY_SECRET") or secrets.token_hex(32)).encode()
 TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "0").lower() in ("1", "true", "yes")
 PROXY_HOPS = max(1, int(os.environ.get("GRABLY_PROXY_HOPS", 1)))
@@ -253,13 +254,13 @@ def render_page(name: str) -> str:
     """An HTML page with ?v=<content hash> added to the CSS and JS links, so browsers can cache
     those files for a year and still get changes right away (the URL changes with the content).
     On the home page, the AdSense IDs from the environment are filled into the meta tags."""
-    key = (ADS_CLIENT, ADS_SLOT, *((ROOT / p).stat().st_mtime_ns for p in (name, *VERSIONED_ASSETS)))
+    key = (ADS_CLIENT, ADS_SLOT, *((PUBLIC / p).stat().st_mtime_ns for p in (name, *VERSIONED_ASSETS)))
     cached = _page_cache.get(name)
     if cached and cached[0] == key:
         return cached[1]
-    html = (ROOT / name).read_text(encoding="utf-8")
+    html = (PUBLIC / name).read_text(encoding="utf-8")
     for rel in VERSIONED_ASSETS:
-        digest = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()[:10]
+        digest = hashlib.sha256((PUBLIC / rel).read_bytes()).hexdigest()[:10]
         html = html.replace(f'"{rel}"', f'"{rel}?v={digest}"')
     if ADS_CLIENT and ADS_SLOT:
         html = html.replace(
@@ -299,8 +300,7 @@ async def ads_txt():
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
-    return PlainTextResponse("User-agent: *\nAllow: /\nDisallow: /api/\n",
-                             headers={"Cache-Control": "public, max-age=86400"})
+    return FileResponse(PUBLIC / "robots.txt", media_type="text/plain", headers={"Cache-Control": "public, max-age=86400"})
 
 
-app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")
+app.mount("/assets", StaticFiles(directory=PUBLIC / "assets"), name="assets")

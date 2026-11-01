@@ -2,7 +2,7 @@
 
 The website for **Grably**. It downloads videos from TikTok, Instagram, Facebook, X and Pinterest right in the browser, so it works on any laptop, PC or Mac. The phone app for iPhone and Android is coming soon.
 
-- **Frontend**: plain HTML, CSS and JavaScript (`index.html`, `assets/`), no build step.
+- **Frontend**: plain HTML, CSS and JavaScript in `public/`, no build step.
 - **Backend**: a small Python server (`server/`) built on [FastAPI](https://fastapi.tiangolo.com/) and [yt-dlp](https://github.com/yt-dlp/yt-dlp). It looks up videos and sends the files to the browser.
 
 ## How downloading works
@@ -19,23 +19,27 @@ Videos are saved as MP4, preferring H.264/AAC so they play in QuickTime, Photos 
 - Short links (t.co, pin.it, fb.watch, vm.tiktok.com…) are followed one hop at a time, and every hop must stay on one of those sites. yt-dlp is restricted to those sites' extractors. Together these stop the server from being used to fetch arbitrary addresses.
 - Requests are rate-limited per visitor, and concurrent downloads are capped.
 - Files are limited by size and length. Thumbnails are only proxied for URLs the server signed itself.
-- Only `index.html` and `/assets` are served publicly, never the server code.
+- Only the files in `public/` are served, never the server code.
 
-If the API can't be reached (for example when `index.html` is opened as a file or hosted on a static host), the page falls back to checking whether a link is supported and says downloads aren't available right now.
+If the API can't be reached (for example when `public/index.html` is opened as a file or hosted on a static host), the page falls back to checking whether a link is supported and says downloads aren't available right now.
 
 ## Project structure
 
 ```
-index.html                 The page
-privacy.html               Privacy policy (required by Google AdSense)
-assets/css/styles.css      All styles (teal-on-navy theme variables at the top)
-assets/js/main.js          Downloader UI, mobile menu, demos
-assets/img/                Logo, favicon, Apple touch icon, social preview image
-assets/fonts/              Inter and Outfit, self-hosted (SIL Open Font License)
+public/                    Everything the website serves:
+  index.html               The page
+  privacy.html             Privacy policy (required by Google AdSense)
+  robots.txt, _headers     Search-engine rules; response headers on Cloudflare
+  assets/css/styles.css    All styles (teal-on-navy theme variables at the top)
+  assets/js/main.js        Downloader UI, mobile menu, demos
+  assets/img/              Logo, favicon, Apple touch icon, social preview image
+  assets/fonts/            Inter and Outfit, self-hosted (SIL Open Font License)
 server/app.py              Web server: API routes, rate limits, serves the website
 server/downloader.py       Link checks, yt-dlp lookup and download
 server/tests/              Tests (pytest)
 Dockerfile                 Production image (Python + ffmpeg)
+wrangler.jsonc             Cloudflare configuration (Worker, static files, Container)
+cloudflare/worker.ts       Cloudflare Worker: serves public/, sends /api/* to the Container
 ```
 
 ## Run it locally
@@ -70,9 +74,52 @@ pytest server/tests
 
 The tests include a real yt-dlp + ffmpeg download of a locally served clip; they skip that part if ffmpeg isn't installed.
 
-## Deploy
+## Deploy to Cloudflare (recommended)
 
-The site now needs a server, so static-only hosts such as GitHub Pages can't run the downloader. Any host that runs a Docker container works: Render, Railway, Fly.io, Google Cloud Run, or your own VPS.
+On Cloudflare the website is served straight from Cloudflare's network (fast, even when nobody has visited for a while), and the download server runs in a **Cloudflare Container** built from the `Dockerfile`. The Worker in `cloudflare/worker.ts` sends `/api/…` requests to the container, adds your AdSense IDs to the page and serves `/ads.txt`. The container sleeps after 30 idle minutes and starts again on the next download, so the first download after a quiet period takes a few extra seconds.
+
+**You need:** a Cloudflare account on the **Workers Paid** plan (Containers aren't available on the free plan). Check Cloudflare's Workers and Containers pricing pages for current prices; containers are billed while running, plus network traffic for the videos they send.
+
+### Deploy from GitHub (no Docker needed on your computer)
+
+1. In the [Cloudflare dashboard](https://dash.cloudflare.com), go to **Workers & Pages → Create → Import a repository**, connect GitHub and pick this repository.
+2. Use these settings:
+   - **Project name:** `grably` (it must match `"name"` in `wrangler.jsonc`)
+   - **Production branch:** the branch with this code (for example `main`)
+   - **Build command:** leave empty
+   - **Deploy command:** `npx wrangler deploy`
+3. Click **Deploy**. The first deploy takes several minutes while Cloudflare builds the Docker image and prepares the container. The page may load before downloads work; give it a few minutes.
+4. Open the address it shows (`https://grably.<your-subdomain>.workers.dev`) and try a download.
+
+After that, every push to the production branch deploys automatically.
+
+### Or deploy from your computer
+
+With [Docker Desktop](https://www.docker.com/products/docker-desktop/) running:
+
+```bash
+npm install
+```
+
+```bash
+npx wrangler login
+```
+
+```bash
+npx wrangler deploy
+```
+
+### After the first deploy
+
+- **Your own domain** (needed for AdSense): in the Worker, go to **Settings → Domains & Routes → Add → Custom domain**. The domain must be on Cloudflare (you can also buy one through Cloudflare).
+- **AdSense IDs:** set `ADSENSE_CLIENT` and `ADSENSE_SLOT` under `vars` in `wrangler.jsonc` and push. The Worker adds Google's verification tag and serves `/ads.txt` automatically.
+- **Optional secret:** in the Worker's **Settings → Variables and Secrets**, add a secret named `GRABLY_SECRET` (a long random string) so thumbnail links keep working after the container restarts.
+- **Size:** the container uses the `standard-1` instance type (1/2 vCPU, 4 GiB memory). Change `instance_type` in `wrangler.jsonc` to `basic` to spend less, or a larger type if downloads are slow.
+- **Check the setup without deploying:** `npm run check` type-checks the Worker and runs a dry-run deploy (container build skipped).
+
+## Deploy elsewhere (Docker)
+
+Static-only hosts such as GitHub Pages can't run the downloader. Besides Cloudflare, any host that runs a Docker container works: Render, Railway, Fly.io, Google Cloud Run, or your own VPS.
 
 1. Create a new web service from this repository and choose **Docker** (the `Dockerfile` is at the root).
 2. The container listens on `$PORT` (default 8000); most hosts set this automatically.
@@ -104,7 +151,7 @@ Things to plan for:
 | `GRABLY_ALLOWED_ORIGINS` | none | Comma-separated origins allowed to call the API, if the website is hosted on a different domain |
 | `GRABLY_TMP` | system temp | Where temporary downloads are written |
 
-To host the website and the API on different domains, set `<meta name="grably-api" content="https://your-api.example.com">` in `index.html` and list the website's origin in `GRABLY_ALLOWED_ORIGINS`.
+To host the website and the API on different domains, set `<meta name="grably-api" content="https://your-api.example.com">` in `public/index.html` and list the website's origin in `GRABLY_ALLOWED_ORIGINS`.
 
 ## Performance
 
@@ -124,16 +171,16 @@ Grably is completely free: there's no subscription or premium plan. The site ear
 ### Setup
 
 1. Deploy the site on your own domain first (AdSense reviews a live site).
-2. Edit `privacy.html` and replace **[add your contact email]** with a real email address.
+2. Edit `public/privacy.html` and replace **[add your contact email]** with a real email address.
 3. Apply at [adsense.google.com](https://adsense.google.com) and add your site.
-4. Set `GRABLY_ADSENSE_CLIENT` to your publisher ID (`ca-pub-…`). The server then automatically:
+4. Set your publisher ID (`ca-pub-…`): on Cloudflare in `ADSENSE_CLIENT` under `vars` in `wrangler.jsonc`, on other hosts in the `GRABLY_ADSENSE_CLIENT` environment variable. The site then automatically:
    - adds the `google-adsense-account` verification tag to the page, and
    - serves `/ads.txt` with the right line (`google.com, pub-…, DIRECT, f08c47fec0942fa0`).
-5. In AdSense, create a **Display ad** unit (responsive) and set `GRABLY_ADSENSE_SLOT` to its numeric ID. Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
+5. In AdSense, create a **Display ad** unit (responsive) and put its numeric ID in `ADSENSE_SLOT` (Cloudflare) or `GRABLY_ADSENSE_SLOT` (other hosts). Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
 6. In AdSense, turn on the **Privacy & messaging** consent message for the EEA, UK and Switzerland. Google requires consent there, and the privacy policy says visitors will be asked.
 7. Keep **Auto ads** off. The ad spaces are placed between content sections, well away from the download box and buttons. Ads next to download buttons can be mistaken for them, which is against AdSense rules and can get the account suspended.
 
-If you host the page without the Python server, put the two IDs in the `grably-ads-client` and `grably-ads-slot` meta tags in `index.html`, and create an `ads.txt` file yourself.
+If you host the page without the Python server, put the two IDs in the `grably-ads-client` and `grably-ads-slot` meta tags in `public/index.html`, and create an `ads.txt` file yourself.
 
 ### How the ads are loaded
 
@@ -144,8 +191,8 @@ If you host the page without the Python server, put the two IDs in the `grably-a
 ## Before launch
 
 1. **Terms of use and takedown contact**: a public downloader should have terms of use and a way for rights holders to reach you (for example a DMCA/copyright contact). Have these reviewed by someone qualified.
-2. **Privacy policy**: `privacy.html` describes what this website does (links aren't stored, files are deleted after download, IP addresses are only used briefly for rate limiting, and Google AdSense cookies). Add your contact email, have it reviewed, and update it if you change how the site works. The phone app will need its own policy for the App Store and Google Play.
-3. **Domain**: once you have one, change `og:image` in `index.html` to an absolute URL (for example `https://yourdomain.com/assets/img/og-image.png`) so link previews work.
+2. **Privacy policy**: `public/privacy.html` describes what this website does (links aren't stored, files are deleted after download, IP addresses are only used briefly for rate limiting, and Google AdSense cookies). Add your contact email, have it reviewed, and update it if you change how the site works. The phone app will need its own policy for the App Store and Google Play.
+3. **Domain**: once you have one, change `og:image` in `public/index.html` to an absolute URL (for example `https://yourdomain.com/assets/img/og-image.png`) so link previews work.
 4. **Copy review**: check the FAQ against how the site and app actually behave.
 
 ## When the phone app launches
@@ -155,8 +202,8 @@ Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the
 ## Customizing
 
 - **Colors**: the theme is teal on dark navy, from the logo. Edit the variables in `:root` at the top of `styles.css`: `--teal-500` (`#10B3A3`) is the accent and `--navy-900` (`#0B1A33`) the background. Buttons use navy text on teal, because white on teal is too low-contrast to read comfortably. App mockups keep a light palette, set in the block right after `:root`.
-- **Fonts**: Outfit (headings and mockups) and Inter (body), self-hosted in `assets/fonts/` (Latin and Latin-Extended character sets).
-- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `assets/js/main.js` (instant feedback in the browser). Keep them in sync.
+- **Fonts**: Outfit (headings and mockups) and Inter (body), self-hosted in `public/assets/fonts/` (Latin and Latin-Extended character sets).
+- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `public/assets/js/main.js` (instant feedback in the browser). Keep them in sync.
 
 ## Credits
 

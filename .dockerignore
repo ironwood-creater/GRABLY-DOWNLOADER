@@ -3,3 +3,6 @@
 **/.pytest_cache
 server/tests
 *.md
+node_modules
+.wrangler
+cloudflare
