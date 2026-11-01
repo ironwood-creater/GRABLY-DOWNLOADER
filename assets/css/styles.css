@@ -515,14 +515,14 @@ strong { font-weight: 600; color: var(--ink); }
 .app-card__acts { margin-left: auto; display: flex; gap: 1em; color: var(--ink); }
 .app-card__acts svg { width: 1.6em; height: 1.6em; }
 .app-card__video { margin-top: 1em; height: 10.5em; border-radius: 1.4em; display: grid; place-items: center; }
-.app-premium {
+.app-free {
   display: flex; gap: .9em; align-items: flex-start;
   margin: 1em 1.6em 0; padding: 1.1em 1.2em; border-radius: 1.6em; background: #fff;
 }
-.app-premium__icon { flex: none; width: 2.4em; height: 2.4em; border-radius: 50%; background: #ff8a1f; color: #fff; display: grid; place-items: center; }
-.app-premium__icon svg { width: 1.3em; height: 1.3em; }
-.app-premium b { display: block; font-size: 1.2em; font-weight: 600; }
-.app-premium small { display: block; font-size: .9em; color: var(--muted); margin-top: .2em; }
+.app-free__icon { flex: none; width: 2.4em; height: 2.4em; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+.app-free__icon svg { width: 1.3em; height: 1.3em; }
+.app-free b { display: block; font-size: 1.2em; font-weight: 600; }
+.app-free small { display: block; font-size: .9em; color: var(--muted); margin-top: .2em; }
 
 /* --- Downloads screen & list (also used in the Features section) --- */
 .screen-downloads { background: linear-gradient(180deg, #bdebe5 0%, #e0f4f1 18%, #f4f6f8 34%); }
@@ -664,8 +664,8 @@ strong { font-weight: 600; color: var(--ink); }
 .manager .dl-item[hidden] { display: none; }
 .manager .dl-item__side { align-self: center; margin: 0 .4em 0 0; }
 
-/* ---------- Premium ---------- */
-.premium {
+/* ---------- Free ---------- */
+.free {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 48px; align-items: center;
   padding: 56px; border-radius: 40px; color: #fff; overflow: hidden; position: relative;
   background:
@@ -675,27 +675,43 @@ strong { font-weight: 600; color: var(--ink); }
   border: 1px solid rgba(16, 179, 163, .28);
   box-shadow: var(--shadow-lg);
 }
-.premium__badge {
+.free__badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 999px;
   background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16);
   font-size: 14px; font-weight: 500;
 }
-.premium__badge svg { width: 18px; height: 18px; color: #ffb366; }
-.premium h2 { margin-top: 20px; font-size: clamp(32px, 4vw, 46px); font-weight: 700; }
-.premium__copy p:last-child { margin-top: 14px; font-size: 18px; color: var(--ink-2); }
-.premium__list { display: grid; gap: 12px; }
-.premium__list li {
+.free__badge svg { width: 18px; height: 18px; color: var(--teal-300); }
+.free h2 { margin-top: 20px; font-size: clamp(32px, 4vw, 46px); font-weight: 700; }
+.free__copy p:last-child { margin-top: 14px; font-size: 18px; color: var(--ink-2); }
+.free__list { display: grid; gap: 12px; }
+.free__list li {
   display: flex; gap: 16px; align-items: center; padding: 18px 20px; border-radius: 22px;
   background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .09);
 }
-.premium__icon {
+.free__icon {
   flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
   background: linear-gradient(140deg, var(--teal-400), var(--teal-600)); color: var(--navy-900);
   box-shadow: 0 8px 20px -8px rgba(16, 179, 163, .9);
 }
-.premium__icon svg { width: 22px; height: 22px; }
-.premium__list b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 18px; }
-.premium__list small { display: block; font-size: 14px; color: var(--ink-2); }
+.free__icon svg { width: 22px; height: 22px; }
+.free__list b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.free__list small { display: block; font-size: 14px; color: var(--ink-2); }
+
+/* ---------- Ad spaces (Google AdSense) ----------
+   Hidden unless AdSense is configured. The height is reserved before the ad loads so the page
+   doesn't jump, and a space collapses if Google has no ad to show. Ads are never clipped. */
+.ad-slot { display: none; padding: 8px 0 40px; }
+.has-ads .ad-slot { display: block; }
+.ad-slot__label {
+  margin-bottom: 8px; text-align: center; font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+.ad-slot__unit {
+  max-width: 970px; min-height: 250px; margin: 0 auto; border-radius: 16px;
+  background: rgba(255, 255, 255, .025); border: 1px dashed var(--line);
+}
+.ad-slot__unit:has(ins[data-ad-status="filled"]) { background: none; border-color: transparent; }
+.ad-slot:has(ins[data-ad-status="unfilled"]) { display: none; }
 
 /* ---------- Respect band ---------- */
 .respect { padding: 0 0 24px; }
@@ -980,7 +996,7 @@ strong { font-weight: 600; color: var(--ink); }
   .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile--manager { grid-row: auto; }
   .bento > .tile:last-child { grid-column: span 2; }
-  .premium { grid-template-columns: minmax(0, 1fr); padding: 48px; }
+  .free { grid-template-columns: minmax(0, 1fr); padding: 48px; }
   .faq { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .faq .section-head { position: static; text-align: center; margin: 0 auto; }
   .computer__inner { grid-template-columns: minmax(0, 1fr); gap: 48px; }
@@ -1035,8 +1051,8 @@ strong { font-weight: 600; color: var(--ink); }
   .tile--manager { grid-column: auto; padding: 20px; }
   .bento > .tile:last-child { grid-column: auto; }
   .manager { font-size: 9.5px; margin-inline: -4px; }
-  .premium { padding: 32px 20px; border-radius: 28px; }
-  .premium__list li { padding: 14px 16px; }
+  .free { padding: 32px 20px; border-radius: 28px; }
+  .free__list li { padding: 14px 16px; }
   .respect__inner { flex-direction: column; padding: 24px; }
   .faq__item summary { padding: 18px 18px; font-size: 17px; }
   .faq__a { padding: 0 18px 18px; }
@@ -1050,6 +1066,10 @@ strong { font-weight: 600; color: var(--ink); }
   .laptop { font-size: clamp(6px, 2.2vw, 10px); padding: 0 5%; }
 }
 
+@media (max-width: 640px) {
+  .ad-slot__unit { min-height: 280px; }
+}
+
 @media (max-width: 360px) {
   .checker__paste { display: none; }
 }
@@ -1059,3 +1079,21 @@ strong { font-weight: 600; color: var(--ink); }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .js [data-reveal]:not(.is-visible) { opacity: 1; }
 }
+
+/* ---------- Legal pages (privacy policy) ---------- */
+.legal { max-width: 780px; margin: 0 auto; padding: 64px var(--gutter) 96px; }
+.legal h1 { font-size: clamp(36px, 5vw, 52px); font-weight: 700; }
+.legal__updated { margin-top: 12px; color: var(--muted); font-size: 15px; }
+.legal__intro { margin-top: 28px; font-size: 18px; color: var(--ink-2); }
+.legal h2 { margin: 44px 0 12px; font-size: 24px; font-weight: 600; }
+.legal h3 { margin: 24px 0 8px; font-size: 18px; font-weight: 600; }
+.legal p, .legal li { color: var(--ink-2); }
+.legal p + p { margin-top: 12px; }
+.legal ul { margin-top: 10px; padding-left: 22px; list-style: disc; display: grid; gap: 8px; }
+.legal a { color: var(--teal-300); text-decoration: underline; text-underline-offset: 3px; }
+.legal a:hover { color: var(--teal-200); }
+.legal strong { color: var(--ink); }
+.site-footer--simple { padding: 32px 0; }
+.site-footer--simple .site-footer__bottom { margin-top: 0; padding-top: 0; border-top: 0; }
+.site-footer__bottom a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer__bottom a:hover { color: var(--teal-300); }

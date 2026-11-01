@@ -34,7 +34,7 @@ log = logging.getLogger("grably.downloader")
 class Settings:
     max_duration: int = 3 * 60 * 60          # seconds
     max_bytes: int = 500 * 1024 * 1024       # largest file we'll serve
-    allow_audio: bool = False                # MP3 downloads (a Premium feature in the app)
+    allow_audio: bool = True                 # offer an "MP3 · Audio only" option
     tmp_root: Path = Path(tempfile.gettempdir()) / "grably"
     socket_timeout: int = 20
 
@@ -43,7 +43,7 @@ class Settings:
         s = cls()
         s.max_duration = int(os.environ.get("GRABLY_MAX_DURATION", s.max_duration))
         s.max_bytes = int(os.environ.get("GRABLY_MAX_MB", 500)) * 1024 * 1024
-        s.allow_audio = os.environ.get("GRABLY_AUDIO", "0").lower() in ("1", "true", "yes")
+        s.allow_audio = os.environ.get("GRABLY_AUDIO", "1").lower() in ("1", "true", "yes")
         s.tmp_root = Path(os.environ.get("GRABLY_TMP", s.tmp_root))
         return s
 

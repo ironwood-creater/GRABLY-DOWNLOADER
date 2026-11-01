@@ -28,7 +28,7 @@ import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
@@ -46,6 +46,17 @@ TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "0").lower() in ("1", "true",
 PROXY_HOPS = max(1, int(os.environ.get("GRABLY_PROXY_HOPS", 1)))
 MAX_THUMB_BYTES = 5 * 1024 * 1024
 STALE_AFTER = 3 * 60 * 60  # seconds before an abandoned temp download folder is removed
+
+# Google AdSense: publisher ID (ca-pub-...) and the display ad unit ID used for the ad spaces.
+ADS_CLIENT = os.environ.get("GRABLY_ADSENSE_CLIENT", "").strip()
+ADS_SLOT = os.environ.get("GRABLY_ADSENSE_SLOT", "").strip()
+if ADS_CLIENT and not re.fullmatch(r"ca-pub-\d{10,20}", ADS_CLIENT):
+    log.warning("GRABLY_ADSENSE_CLIENT should look like ca-pub-1234567890123456; ads are off")
+    ADS_CLIENT = ""
+if ADS_SLOT and not re.fullmatch(r"\d{5,20}", ADS_SLOT):
+    log.warning("GRABLY_ADSENSE_SLOT should be the numeric ad unit ID; ads are off")
+    ADS_SLOT = ""
+GOOGLE_ADS_TXT_ID = "f08c47fec0942fa0"  # Google's fixed certification ID for ads.txt
 
 
 # --------------------------------------------------------------------------
@@ -235,25 +246,61 @@ async def thumb(u: str = Query(max_length=4096), s: str = Query(max_length=64)):
 # Website (only index.html and /assets are public, not the server code)
 # --------------------------------------------------------------------------
 VERSIONED_ASSETS = ("assets/css/styles.css", "assets/js/main.js")
-_index_cache: dict = {}
+_page_cache: dict = {}
 
 
-def render_index() -> str:
-    """index.html with ?v=<content hash> added to the CSS and JS links. Browsers can then cache
-    those files for a year and still get changes right away (the URL changes with the content)."""
-    key = tuple((ROOT / p).stat().st_mtime_ns for p in ("index.html", *VERSIONED_ASSETS))
-    if _index_cache.get("key") != key:
-        html = (ROOT / "index.html").read_text(encoding="utf-8")
-        for rel in VERSIONED_ASSETS:
-            digest = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()[:10]
-            html = html.replace(f'"{rel}"', f'"{rel}?v={digest}"')
-        _index_cache.update(key=key, html=html)
-    return _index_cache["html"]
+def render_page(name: str) -> str:
+    """An HTML page with ?v=<content hash> added to the CSS and JS links, so browsers can cache
+    those files for a year and still get changes right away (the URL changes with the content).
+    On the home page, the AdSense IDs from the environment are filled into the meta tags."""
+    key = (ADS_CLIENT, ADS_SLOT, *((ROOT / p).stat().st_mtime_ns for p in (name, *VERSIONED_ASSETS)))
+    cached = _page_cache.get(name)
+    if cached and cached[0] == key:
+        return cached[1]
+    html = (ROOT / name).read_text(encoding="utf-8")
+    for rel in VERSIONED_ASSETS:
+        digest = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()[:10]
+        html = html.replace(f'"{rel}"', f'"{rel}?v={digest}"')
+    if ADS_CLIENT and ADS_SLOT:
+        html = html.replace(
+            '<meta name="grably-ads-client" content="">',
+            f'<meta name="grably-ads-client" content="{ADS_CLIENT}">\n'
+            f'  <meta name="google-adsense-account" content="{ADS_CLIENT}">',
+        )
+        html = html.replace('<meta name="grably-ads-slot" content="">', f'<meta name="grably-ads-slot" content="{ADS_SLOT}">')
+    _page_cache[name] = (key, html)
+    return html
+
+
+def page(name: str) -> HTMLResponse:
+    return HTMLResponse(render_page(name), headers={"Cache-Control": "no-cache"})
 
 
 @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 async def index():
-    return HTMLResponse(render_index(), headers={"Cache-Control": "no-cache"})
+    return page("index.html")
+
+
+@app.api_route("/privacy.html", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/privacy", methods=["GET", "HEAD"], include_in_schema=False)
+async def privacy():
+    return page("privacy.html")
+
+
+@app.get("/ads.txt", include_in_schema=False)
+async def ads_txt():
+    """Authorizes Google to sell ads on this site (AdSense checks for this file)."""
+    if not ADS_CLIENT:
+        return PlainTextResponse("Not found.\n", status_code=404)
+    publisher = ADS_CLIENT.removeprefix("ca-")
+    return PlainTextResponse(f"google.com, {publisher}, DIRECT, {GOOGLE_ADS_TXT_ID}\n",
+                             headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return PlainTextResponse("User-agent: *\nAllow: /\nDisallow: /api/\n",
+                             headers={"Cache-Control": "public, max-age=86400"})
 
 
 app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")

@@ -27,6 +27,7 @@ If the API can't be reached (for example when `index.html` is opened as a file o
 
 ```
 index.html                 The page
+privacy.html               Privacy policy (required by Google AdSense)
 assets/css/styles.css      All styles (teal-on-navy theme variables at the top)
 assets/js/main.js          Downloader UI, mobile menu, demos
 assets/img/                Logo, favicon, Apple touch icon, social preview image
@@ -90,7 +91,9 @@ Things to plan for:
 | --- | --- | --- |
 | `PORT` | `8000` | Port the server listens on (Docker) |
 | `GRABLY_SECRET` | random per start | Signs thumbnail URLs; set it in production |
-| `GRABLY_AUDIO` | `0` | `1` adds an "MP3 · Audio only" option. Off by default because audio downloads are a Premium feature in the app |
+| `GRABLY_AUDIO` | `1` | Offers an "MP3 · Audio only" option; `0` turns it off |
+| `GRABLY_ADSENSE_CLIENT` | none | Your AdSense publisher ID, like `ca-pub-1234567890123456`. Turns ads on (see below) |
+| `GRABLY_ADSENSE_SLOT` | none | The numeric ID of the display ad unit used in the ad spaces |
 | `GRABLY_MAX_MB` | `500` | Largest file the server will send |
 | `GRABLY_MAX_DURATION` | `10800` | Longest video, in seconds (3 hours) |
 | `GRABLY_INFO_PER_MIN` | `30` | Link lookups per visitor per minute |
@@ -112,12 +115,38 @@ The page is built to stay smooth (60 FPS) and load fast:
 - **Fast loading.** Fonts are self-hosted and preloaded, so there are no requests to Google and no render-blocking font stylesheet. The server compresses HTML, CSS, JS and JSON (gzip). CSS and JS links get a content hash (`?v=…`), so browsers cache them for a year and still pick up changes immediately.
 - **Font files never change at the same URL** (they're cached for a year). If you replace a font, give the file a new name.
 
+## Free, supported by ads (Google AdSense)
+
+Grably is completely free: there's no subscription or premium plan. The site earns money from Google AdSense ads.
+
+**Read this first:** Google's publisher policies don't allow ads on sites that help people download copyrighted content without permission, and AdSense often rejects social-video downloaders or disables ads on them later. Before applying, read the "Copyrighted material" section of Google's Publisher Policies (search for "Google Publisher Policies" in the [AdSense Help Center](https://support.google.com/adsense)), and keep a backup ad network in mind.
+
+### Setup
+
+1. Deploy the site on your own domain first (AdSense reviews a live site).
+2. Edit `privacy.html` and replace **[add your contact email]** with a real email address.
+3. Apply at [adsense.google.com](https://adsense.google.com) and add your site.
+4. Set `GRABLY_ADSENSE_CLIENT` to your publisher ID (`ca-pub-…`). The server then automatically:
+   - adds the `google-adsense-account` verification tag to the page, and
+   - serves `/ads.txt` with the right line (`google.com, pub-…, DIRECT, f08c47fec0942fa0`).
+5. In AdSense, create a **Display ad** unit (responsive) and set `GRABLY_ADSENSE_SLOT` to its numeric ID. Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
+6. In AdSense, turn on the **Privacy & messaging** consent message for the EEA, UK and Switzerland. Google requires consent there, and the privacy policy says visitors will be asked.
+7. Keep **Auto ads** off. The ad spaces are placed between content sections, well away from the download box and buttons. Ads next to download buttons can be mistaken for them, which is against AdSense rules and can get the account suspended.
+
+If you host the page without the Python server, put the two IDs in the `grably-ads-client` and `grably-ads-slot` meta tags in `index.html`, and create an `ads.txt` file yourself.
+
+### How the ads are loaded
+
+- Google's ad script loads only after the page has finished loading, and each ad is requested when it's about to scroll into view, so ads don't slow down the first paint or scrolling.
+- Each ad space reserves its height before the ad arrives, so the page doesn't jump. A space collapses if Google has no ad for it.
+- With an ad blocker, the ad spaces are removed before they scroll into view, so visitors don't see empty boxes.
+
 ## Before launch
 
 1. **Terms of use and takedown contact**: a public downloader should have terms of use and a way for rights holders to reach you (for example a DMCA/copyright contact). Have these reviewed by someone qualified.
-2. **Privacy policy**: needed for the website, and required by Apple and Google for the app listings.
+2. **Privacy policy**: `privacy.html` describes what this website does (links aren't stored, files are deleted after download, IP addresses are only used briefly for rate limiting, and Google AdSense cookies). Add your contact email, have it reviewed, and update it if you change how the site works. The phone app will need its own policy for the App Store and Google Play.
 3. **Domain**: once you have one, change `og:image` in `index.html` to an absolute URL (for example `https://yourdomain.com/assets/img/og-image.png`) so link previews work.
-4. **Copy review**: check the FAQ and Premium text against how the app actually behaves.
+4. **Copy review**: check the FAQ and the "free" section against how the site and app actually behave.
 
 ## When the phone app launches
 

@@ -114,7 +114,7 @@ SAMPLE = {
 
 def test_summarize_offers_clear_quality_steps():
     out = d.summarize(SAMPLE, d.PLATFORMS[0], "https://www.tiktok.com/@a/video/1")
-    assert [o["quality"] for o in out["options"]] == ["1080p", "720p", "360p"]
+    assert [o["quality"] for o in out["options"] if o["kind"] == "video"] == ["1080p", "720p", "360p"]
     assert out["options"][1]["size"] == 9_600_000  # video + separate audio
     assert out["title"] == "Golden hour drive along the coast"
     assert out["platform_name"] == "TikTok"
@@ -152,7 +152,7 @@ def test_too_long_videos_are_rejected(monkeypatch):
 
 def test_unknown_resolution_gets_single_best_option():
     out = d.summarize({"title": "t", "url": "https://cdn/x.mp4"}, d.PLATFORMS[2], "u")
-    assert [o["id"] for o in out["options"]] == ["best"]
+    assert [o["id"] for o in out["options"]] == ["best", "audio"]  # audio is on by default
 
 
 # ---------------------------------------------------------------- fetch_info

@@ -545,6 +545,64 @@
     document.addEventListener('visibilitychange', updateTyping);
   }
 
+  /* ---------- Google AdSense ----------
+   * Ads appear only when a publisher ID and ad unit ID are set (meta tags in index.html, filled in by
+   * the server from GRABLY_ADSENSE_CLIENT / GRABLY_ADSENSE_SLOT). Google's script loads after the page
+   * has finished loading, and each ad is requested only when it's about to scroll into view, so ads
+   * never slow down the first paint or scrolling.
+   */
+  var metaContent = function (name) {
+    var m = document.querySelector('meta[name="' + name + '"]');
+    return m ? m.content.trim() : '';
+  };
+  var adClient = metaContent('grably-ads-client');
+  var adUnit = metaContent('grably-ads-slot');
+  var adSpaces = [].slice.call(document.querySelectorAll('[data-ad]'));
+  var hideAds = function () {
+    document.documentElement.classList.remove('has-ads');
+    adSpaces.forEach(function (el) { el.remove(); });
+  };
+
+  if (!/^ca-pub-\d{10,20}$/.test(adClient) || !/^\d{5,20}$/.test(adUnit)) {
+    hideAds();
+  } else {
+    var adScript = null;
+    var loadAdScript = function () {
+      if (adScript) return;
+      adScript = document.createElement('script');
+      adScript.async = true;
+      adScript.crossOrigin = 'anonymous';
+      adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(adClient);
+      adScript.onerror = hideAds; // blocked by an ad blocker or offline: don't leave empty boxes
+      document.head.appendChild(adScript);
+    };
+    var fillAd = function (space) {
+      var ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.display = 'block';
+      ins.setAttribute('data-ad-client', adClient);
+      ins.setAttribute('data-ad-slot', adUnit);
+      ins.setAttribute('data-ad-format', 'auto');
+      ins.setAttribute('data-full-width-responsive', 'true');
+      space.querySelector('.ad-slot__unit').appendChild(ins);
+      loadAdScript();
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    };
+    var startAds = function () {
+      if (!('IntersectionObserver' in window)) { adSpaces.forEach(fillAd); return; }
+      var adObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          adObserver.unobserve(entry.target);
+          fillAd(entry.target);
+        });
+      }, { rootMargin: '600px 0px' });
+      adSpaces.forEach(function (el) { adObserver.observe(el); });
+    };
+    if (document.readyState === 'complete') startAds();
+    else window.addEventListener('load', startAds, { once: true });
+  }
+
   /* ---------- Footer year ---------- */
   var year = document.querySelector('[data-year]');
   if (year) year.textContent = new Date().getFullYear();

@@ -3,10 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Grably: Download Videos from TikTok, Instagram, Facebook, X &amp; Pinterest</title>
-  <meta name="description" content="Download videos from TikTok, Instagram, Facebook, X and Pinterest on your laptop, PC or Mac. Paste a link, pick a quality, and it's saved. Phone app coming soon.">
+  <title>Grably: Free Video Downloader for TikTok, Instagram, Facebook, X &amp; Pinterest</title>
+  <meta name="description" content="Free video downloader for TikTok, Instagram, Facebook, X and Pinterest. Works on any laptop, PC or Mac: paste a link, pick a quality, and it's saved. No sign-up, no subscription.">
   <!-- Where the download API lives. Leave empty when this page is served by the Grably server (server/app.py). -->
   <meta name="grably-api" content="">
+  <!-- Google AdSense: publisher ID (ca-pub-...) and display ad unit ID. Empty = no ads.
+       When the page is served by server/app.py these are filled from GRABLY_ADSENSE_CLIENT / GRABLY_ADSENSE_SLOT. -->
+  <meta name="grably-ads-client" content="">
+  <meta name="grably-ads-slot" content="">
   <meta name="theme-color" content="#0B1A33">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 
@@ -24,6 +28,8 @@
   <script>
     // Hide scroll-reveal content until main.js shows it. If main.js never runs, show everything after 4s.
     document.documentElement.classList.add('js');
+    // Reserve room for ads before the first paint, so nothing jumps when they load
+    if (document.querySelector('meta[name="grably-ads-client"]').content) document.documentElement.classList.add('has-ads');
     setTimeout(function () { if (!window.__grably) document.documentElement.classList.remove('js'); }, 4000);
   </script>
 </head>
@@ -51,14 +57,11 @@
   <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></g></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></symbol>
-  <symbol id="i-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M2.5 7.2a.8.8 0 0 1 1.3-.7l4.1 3.4 3.4-5.4a.8.8 0 0 1 1.4 0l3.4 5.4 4.1-3.4a.8.8 0 0 1 1.3.7l-1.6 10.1a1.5 1.5 0 0 1-1.5 1.3H5.6a1.5 1.5 0 0 1-1.5-1.3L2.5 7.2Z"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><g fill="currentColor"><path d="M12 2.5a6.5 6.5 0 0 0-6.5 6.5v3.6l-1.7 3a1 1 0 0 0 .9 1.4h14.6a1 1 0 0 0 .9-1.4l-1.7-3V9A6.5 6.5 0 0 0 12 2.5Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0Z"/></g></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-clipboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></g></symbol>
-  <symbol id="i-sparkle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4"/><path d="M17 19h4"/></g></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></g></symbol>
-  <symbol id="i-eraser" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21 3 17a2 2 0 0 1 0-2.8L13.2 4a2 2 0 0 1 2.8 0L20.9 9a2 2 0 0 1 0 2.8L11.6 21"/><path d="M7 21h14"/><path d="m6 11 7 7"/></g></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L21 10"/></g></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></g></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></g></symbol>
@@ -90,7 +93,6 @@
         <li><a href="#how-it-works">How it works</a></li>
         <li><a href="#computer">On your computer</a></li>
         <li><a href="#features">App</a></li>
-        <li><a href="#premium">Premium</a></li>
         <li><a href="#faq">FAQ</a></li>
       </ul>
       <a class="btn btn--primary btn--sm site-nav__cta" href="#checker" data-focus-checker><svg aria-hidden="true"><use href="#i-download"/></svg>Download a video</a>
@@ -112,7 +114,7 @@
       <div class="hero__copy">
         <p class="pill"><span class="dot" aria-hidden="true"></span>Now on the web · Phone app coming soon</p>
         <h1 class="hero__title">Download any video in <span class="hl">one&nbsp;click</span>.</h1>
-        <p class="hero__lead">Save videos from TikTok, Instagram, Facebook, X and Pinterest right in your browser, on any laptop, PC or Mac. Paste a link, pick a quality, done. Nothing to install.</p>
+        <p class="hero__lead">Save videos from TikTok, Instagram, Facebook, X and Pinterest right in your browser, on any laptop, PC or Mac. Paste a link, pick a quality, done. Free, with nothing to install.</p>
 
         <form class="checker" id="checker" novalidate>
           <label class="checker__label" for="checker-input">Paste a video link to download it</label>
@@ -178,7 +180,7 @@
               <div class="app-head">
                 <span class="avatar avatar--a"></span>
                 <span class="app-head__text"><b>Video Downloader</b><small>Download from any platform instantly</small></span>
-                <span class="round-btn"><svg><use href="#i-crown"/></svg></span>
+                <span class="round-btn"><svg><use href="#i-bell"/></svg></span>
               </div>
 
               <div class="app-field">
@@ -205,9 +207,9 @@
                 </div>
                 <div class="app-card__video thumb thumb--sunset"><span class="play"><svg><use href="#i-play"/></svg></span></div>
               </div>
-              <div class="app-premium">
-                <span class="app-premium__icon"><svg><use href="#i-crown"/></svg></span>
-                <span><b>Premium Features</b><small>Remove watermarks, download audio, and unlock exclusive features</small></span>
+              <div class="app-free">
+                <span class="app-free__icon"><svg><use href="#i-check"/></svg></span>
+                <span><b>100% Free</b><small>No subscription and no sign-up. Every download is free.</small></span>
               </div>
 
               <div class="screen-cta"><span>Download</span></div>
@@ -315,6 +317,14 @@
     </div>
   </section>
 
+  <!-- Ad space: only shown when AdSense is configured (see README) -->
+  <aside class="ad-slot" data-ad aria-label="Advertisement">
+    <div class="container">
+      <p class="ad-slot__label">Advertisement</p>
+      <div class="ad-slot__unit"></div>
+    </div>
+  </aside>
+
   <!-- ============ HOW IT WORKS ============ -->
   <section class="section" id="how-it-works">
     <div class="container">
@@ -390,6 +400,14 @@
       </div>
     </div>
   </section>
+
+  <!-- Ad space: only shown when AdSense is configured (see README) -->
+  <aside class="ad-slot" data-ad aria-label="Advertisement">
+    <div class="container">
+      <p class="ad-slot__label">Advertisement</p>
+      <div class="ad-slot__unit"></div>
+    </div>
+  </aside>
 
   <!-- ============ FEATURES ============ -->
   <section class="section section--tint" id="features">
@@ -471,27 +489,27 @@
     </div>
   </section>
 
-  <!-- ============ PREMIUM ============ -->
-  <section class="section" id="premium">
+  <!-- ============ FREE ============ -->
+  <section class="section" id="free">
     <div class="container">
-      <div class="premium" data-reveal>
-        <div class="premium__copy">
-          <p class="premium__badge"><svg aria-hidden="true"><use href="#i-crown"/></svg>Grably Premium</p>
-          <h2>Want more? Go Premium.</h2>
-          <p>When the app launches, upgrade from the crown button on the home screen to unlock Grably's extra tools.</p>
+      <div class="free" data-reveal>
+        <div class="free__copy">
+          <p class="free__badge"><svg aria-hidden="true"><use href="#i-check"/></svg>100% free</p>
+          <h2>Free. No subscription, ever.</h2>
+          <p>Every feature is free for everyone. Grably is supported by the ads on this website, so you never pay a thing.</p>
         </div>
-        <ul class="premium__list">
+        <ul class="free__list">
           <li>
-            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-eraser"/></svg></span>
-            <span><b>Remove watermarks</b><small>Keep your saved videos clean.</small></span>
+            <span class="free__icon"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+            <span><b>No subscription</b><small>No trials, no paywall, no premium plan.</small></span>
           </li>
           <li>
-            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-music"/></svg></span>
-            <span><b>Download audio</b><small>Save just the sound: songs, podcasts, voiceovers.</small></span>
+            <span class="free__icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+            <span><b>No sign-up</b><small>No account and no email address needed.</small></span>
           </li>
           <li>
-            <span class="premium__icon"><svg aria-hidden="true"><use href="#i-sparkle"/></svg></span>
-            <span><b>Exclusive features</b><small>Premium-only tools, added as they're released.</small></span>
+            <span class="free__icon"><svg aria-hidden="true"><use href="#i-music"/></svg></span>
+            <span><b>Video and audio</b><small>MP4 in every available quality, plus MP3 audio.</small></span>
           </li>
         </ul>
       </div>
@@ -525,7 +543,7 @@
         </details>
         <details class="faq__item">
           <summary>Where do my downloads go?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>To your browser's Downloads folder, as an MP4 file that plays in QuickTime, Photos, VLC or Windows Media Player.</p></div>
+          <div class="faq__a"><p>To your browser's Downloads folder: an MP4 video that plays in QuickTime, Photos, VLC or Windows Media Player, or an MP3 if you chose audio.</p></div>
         </details>
         <details class="faq__item">
           <summary>Which apps does Grably work with?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
@@ -541,7 +559,7 @@
         </details>
         <details class="faq__item">
           <summary>Is Grably free?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
-          <div class="faq__a"><p>The website is free to use. The app will be free to download, with an optional Premium upgrade for watermark removal, audio downloads and exclusive features.</p></div>
+          <div class="faq__a"><p>Yes, completely. There's no subscription, no premium plan and no sign-up. Grably is supported by the ads shown on this website, and the phone app will be free too.</p></div>
         </details>
         <details class="faq__item">
           <summary>Can I download any video I want?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary>
@@ -550,6 +568,14 @@
       </div>
     </div>
   </section>
+
+  <!-- Ad space: only shown when AdSense is configured (see README) -->
+  <aside class="ad-slot" data-ad aria-label="Advertisement">
+    <div class="container">
+      <p class="ad-slot__label">Advertisement</p>
+      <div class="ad-slot__unit"></div>
+    </div>
+  </aside>
 
   <!-- ============ LAUNCH ============ -->
   <section class="section section--cta" id="launch">
@@ -595,8 +621,14 @@
             <li><a href="#how-it-works">How it works</a></li>
             <li><a href="#computer">On your computer</a></li>
             <li><a href="#features">The app</a></li>
-            <li><a href="#premium">Premium</a></li>
             <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>About</h3>
+          <ul>
+            <li><a href="#free">Why it's free</a></li>
+            <li><a href="privacy.html">Privacy policy</a></li>
           </ul>
         </div>
       </nav>
