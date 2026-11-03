@@ -84,12 +84,12 @@ On Cloudflare the website is served straight from Cloudflare's network (fast, ev
 
 1. In the [Cloudflare dashboard](https://dash.cloudflare.com), go to **Workers & Pages → Create → Import a repository**, connect GitHub and pick this repository.
 2. Use these settings:
-   - **Project name:** `grably` (it must match `"name"` in `wrangler.jsonc`)
+   - **Project name:** `grably-downloader` (it must match `"name"` in `wrangler.jsonc`)
    - **Production branch:** the branch with this code (for example `main`)
    - **Build command:** leave empty
    - **Deploy command:** `npx wrangler deploy`
 3. Click **Deploy**. The first deploy takes several minutes while Cloudflare builds the Docker image and prepares the container. The page may load before downloads work; give it a few minutes.
-4. Open the address it shows (`https://grably.<your-subdomain>.workers.dev`) and try a download.
+4. Open the address it shows (`https://grably-downloader.<your-subdomain>.workers.dev`) and try a download.
 
 After that, every push to the production branch deploys automatically.
 

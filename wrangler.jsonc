@@ -3,7 +3,8 @@
 //  - cloudflare/worker.ts sends /api/* to a Container running the Python download server (./Dockerfile)
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "grably",
+	// Must match the Worker's name in the Cloudflare dashboard
+	"name": "grably-downloader",
 	"main": "cloudflare/worker.ts",
 	"compatibility_date": "2026-10-30",
 	"observability": { "enabled": true },
