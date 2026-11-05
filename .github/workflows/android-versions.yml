@@ -1,0 +1,29 @@
+# Temporary: prints current Android library versions (removed once the app is set up)
+name: Android versions
+on:
+  push:
+    branches: [claude/blissful-knuth-6pfc4b]
+    paths: [.github/workflows/android-versions.yml]
+  workflow_dispatch:
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Latest versions on Google Maven
+        run: |
+          for a in com/android/tools/build/gradle androidx/compose/compose-bom androidx/activity/activity-compose \
+                   androidx/navigation/navigation-compose androidx/lifecycle/lifecycle-runtime-compose \
+                   androidx/lifecycle/lifecycle-viewmodel-compose androidx/work/work-runtime-ktx androidx/room/room-runtime \
+                   androidx/core/core-ktx androidx/core/core-splashscreen androidx/datastore/datastore-preferences \
+                   androidx/compose/material3/material3 androidx/compose/ui/ui androidx/test/ext/junit androidx/test/core \
+                   androidx/work/work-testing; do
+            m=$(curl -s "https://dl.google.com/dl/android/maven2/$a/maven-metadata.xml")
+            stable=$(echo "$m" | grep -o '<version>[0-9.]*</version>' | sed 's/<[^>]*>//g' | sort -V | tail -3 | tr '\n' ' ')
+            echo "$a | latest=$(echo "$m" | grep -o '<latest>[^<]*' | sed 's/<latest>//') | stable: $stable"
+          done
+      - name: Android SDK on the runner
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" | sort -V | tail -4
+          ls "$ANDROID_HOME/build-tools" | sort -V | tail -3
+          java -version 2>&1 | head -1
