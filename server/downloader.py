@@ -283,6 +283,8 @@ def _ydl_opts(platform: Optional[Platform], **extra) -> dict:
 
 _FRIENDLY = (
     (("private",), "This video is private, so it can't be downloaded."),
+    (("suspended",), "This account has been suspended, so its videos can't be downloaded."),
+    (("broadcasts/", "live event", "is live"), "Grably can't download live streams. Try again once it has ended and been saved."),
     (("login", "log in", "sign in", "cookies", "authenticat"), "This video needs a login to view, so Grably can't download it."),
     (("unsupported url",), "Grably can't download from that page. Paste a link to a single video."),
     (("no video", "no media", "no formats", "requested format is not available"), "There's no downloadable video in that post."),

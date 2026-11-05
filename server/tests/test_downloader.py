@@ -254,3 +254,11 @@ def test_a_second_failure_is_reported(monkeypatch):
 
     with pytest.raises(d.DownloadError):
         d._retry_once(always)
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("ERROR: [twitter] 1694928419052458133: Suspended", "suspended"),
+    ("ERROR: No suitable extractor found for URL https://x.com/i/broadcasts/1rmxPMjLzAXKN", "live streams"),
+])
+def test_more_friendly_errors(message, expected):
+    assert expected in d.friendly_error(message)
