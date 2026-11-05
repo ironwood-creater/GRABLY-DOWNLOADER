@@ -1,5 +1,6 @@
 # Takes the Google Play screenshots from the real app on an emulator (1080 x 1920) and commits
-# them to android/store/screenshots/raw. Run it from the Actions tab after changing the app's look.
+# them to android/store/screenshots/raw. Runs when this file or ScreenshotTest.kt changes;
+# after other changes to the app's look, run it from the Actions tab.
 name: Store screenshots
 
 on:
