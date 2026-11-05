@@ -6,6 +6,7 @@
 Reads   store/screenshots/raw/*.png   (1080 x 1920, taken by ScreenshotTest on an emulator)
         store/graphics/icon-512.png
 Writes  store/screenshots/phone/*.png (1080 x 1920, framed, with a caption)
+        store/screenshots/raw/*.png   (flattened to RGB, so they can be uploaded as they are too)
         store/graphics/feature-graphic.png (1024 x 500, no transparency)
 """
 from __future__ import annotations
@@ -158,6 +159,12 @@ def feature_graphic(home: Path, downloads: Path) -> Image.Image:
 
 def main() -> None:
     PHONE.mkdir(parents=True, exist_ok=True)
+    # Google Play wants screenshots without transparency; the emulator's captures have an alpha channel
+    for raw in sorted(RAW.glob("*.png")):
+        with Image.open(raw) as im:
+            flat = im.convert("RGB") if im.mode != "RGB" else None
+        if flat:
+            flat.save(raw, optimize=True)
     made = 0
     for name, caption in CAPTIONS.items():
         raw = RAW / f"{name}.png"
