@@ -65,20 +65,42 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.GRABLY_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
-            echo "GRABLY_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
-            echo "The release is signed with the upload key." >> "$GITHUB_STEP_SUMMARY"
-          else
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
             echo "No upload key in the repository's secrets, so the release is unsigned. See android/README.md." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+          # Forgive copy-and-paste extras: spaces, line breaks and quotes around the values
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]"]*//' -e 's/[[:space:]"]*$//'; }
+          printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n"' > "$RUNNER_TEMP/upload.b64"
+          if ! base64 -d "$RUNNER_TEMP/upload.b64" > "$RUNNER_TEMP/upload.jks" 2>/dev/null || [ ! -s "$RUNNER_TEMP/upload.jks" ]; then
+            echo "::error title=Upload key::GRABLY_UPLOAD_KEYSTORE_BASE64 isn't valid. Paste the whole contents of grably-upload-key.base64.txt (one long line of letters and numbers) and nothing else."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/upload.b64"
+          store_pw=$(trim "$KEYSTORE_PASSWORD")
+          alias=$(trim "$KEY_ALIAS")
+          key_pw=$(trim "${KEY_PASSWORD:-$KEYSTORE_PASSWORD}")
+          echo "::add-mask::$store_pw"
+          echo "::add-mask::$key_pw"
+          if ! keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$store_pw" > /dev/null 2>&1; then
+            echo "::error title=Upload key::GRABLY_UPLOAD_KEYSTORE_PASSWORD doesn't open the key. Paste the password exactly as it is in SECRETS-FOR-GITHUB.txt."
+            exit 1
+          fi
+          if ! keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$store_pw" -alias "$alias" > /dev/null 2>&1; then
+            echo "::error title=Upload key::GRABLY_UPLOAD_KEY_ALIAS should be grably-upload."
+            exit 1
+          fi
+          {
+            echo "GRABLY_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks"
+            echo "GRABLY_KEYSTORE_PASSWORD=$store_pw"
+            echo "GRABLY_KEY_ALIAS=$alias"
+            echo "GRABLY_KEY_PASSWORD=$key_pw"
+          } >> "$GITHUB_ENV"
+          echo "The release is signed with the upload key." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build the release (Google Play bundle and APK)
-        env:
-          GRABLY_KEYSTORE_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_PASSWORD }}
-          GRABLY_KEY_ALIAS: ${{ secrets.GRABLY_UPLOAD_KEY_ALIAS }}
-          GRABLY_KEY_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEY_PASSWORD }}
         run: ./gradlew bundleRelease assembleRelease -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$VERSION_CODE"
 
       - name: Check Google Play's 16 KB page size rule
