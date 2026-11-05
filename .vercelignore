@@ -1,0 +1,13 @@
+# Not part of the website or its server
+android/
+cloudflare/
+node_modules/
+.wrangler/
+package.json
+package-lock.json
+tsconfig.json
+wrangler.jsonc
+worker-configuration.d.ts
+Dockerfile
+.dockerignore
+server/tests/

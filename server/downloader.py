@@ -42,13 +42,44 @@ class Settings:
     def from_env(cls) -> "Settings":
         s = cls()
         s.max_duration = int(os.environ.get("GRABLY_MAX_DURATION", s.max_duration))
-        s.max_bytes = int(os.environ.get("GRABLY_MAX_MB", 500)) * 1024 * 1024
+        # Vercel Functions have about 500 MB of temporary disk, and merging needs room for both parts
+        default_mb = 200 if os.environ.get("VERCEL") == "1" else 500
+        s.max_bytes = int(os.environ.get("GRABLY_MAX_MB", default_mb)) * 1024 * 1024
         s.allow_audio = os.environ.get("GRABLY_AUDIO", "1").lower() in ("1", "true", "yes")
         s.tmp_root = Path(os.environ.get("GRABLY_TMP", s.tmp_root))
         return s
 
 
 settings = Settings.from_env()
+
+
+def find_ffmpeg() -> Optional[str]:
+    """ffmpeg merges separate video and audio streams and converts audio to MP3.
+    Uses the system ffmpeg (Docker) or the copy bundled with imageio-ffmpeg (Vercel)."""
+    system = shutil.which("ffmpeg")
+    if system:
+        return system
+    try:
+        import imageio_ffmpeg
+    except ImportError:
+        return None
+    try:
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except RuntimeError:
+        return None
+    if not os.access(exe, os.X_OK):
+        # Some hosts unpack the bundle without the executable bit: use a copy in /tmp
+        copy = Path(tempfile.gettempdir()) / "grably-ffmpeg"
+        if not copy.exists():
+            shutil.copyfile(exe, copy)
+        copy.chmod(0o755)
+        exe = str(copy)
+    return exe
+
+
+FFMPEG = find_ffmpeg()
+if FFMPEG is None:
+    log.warning("ffmpeg not found: only single-file formats are offered and MP3 downloads are off")
 
 USER_AGENT = "Mozilla/5.0 (compatible; GrablyBot/1.0)"
 MAX_REDIRECTS = 5
@@ -243,6 +274,8 @@ def _ydl_opts(platform: Optional[Platform], **extra) -> dict:
     }
     if platform is not None:
         opts["allowed_extractors"] = list(platform.extractors)
+    if FFMPEG:
+        opts["ffmpeg_location"] = FFMPEG
     opts.update(extra)
     return opts
 
@@ -335,7 +368,7 @@ def summarize(info: dict, platform: Platform, url: str) -> dict:
         options.append({"id": f"v{res}", "kind": "video", "format": "MP4", "quality": f"{res}p", "size": size})
     if not options:
         options.append({"id": "best", "kind": "video", "format": "MP4", "quality": "Best quality", "size": None})
-    if settings.allow_audio and any(_has_audio(f) for f in formats):
+    if settings.allow_audio and FFMPEG and any(_has_audio(f) for f in formats):
         options.append({"id": "audio", "kind": "audio", "format": "MP3", "quality": "Audio only", "size": None})
 
     title = (info.get("title") or info.get("description") or "").strip()
@@ -398,6 +431,9 @@ def format_opts(option: str) -> dict:
     sort = ["vcodec:h264", "acodec:aac", "ext:mp4:m4a"]
     if option.startswith("v"):
         sort.insert(0, f"res:{int(option[1:])}")
+    if not FFMPEG:
+        # Without ffmpeg separate video and audio can't be joined: pick files that have both
+        return {"format": "b", "format_sort": sort}
     return {"format": "bv*+ba/b", "format_sort": sort, "merge_output_format": "mp4"}
 
 
@@ -442,7 +478,7 @@ def download(
     """Download a video to a temporary folder. The caller must call .cleanup()."""
     if not OPTION_RE.fullmatch(option or ""):
         raise InvalidLink("Unknown download option.")
-    if option == "audio" and not settings.allow_audio:
+    if option == "audio" and not (settings.allow_audio and FFMPEG):
         raise InvalidLink("Audio downloads aren't available.")
 
     url, platform = resolve(extract_url(raw), peek)

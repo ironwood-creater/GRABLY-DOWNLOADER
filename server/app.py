@@ -16,12 +16,10 @@ import hashlib
 import hmac
 import logging
 import os
-import re
 import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
-from pathlib import Path
 from urllib.parse import urlencode, urlsplit
 
 import httpx
@@ -35,29 +33,29 @@ from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.gzip import DEFAULT_EXCLUDED_CONTENT_TYPES, GZipMiddleware
 
-from . import downloader
+from . import downloader, site
 
 log = logging.getLogger("grably")
 logging.basicConfig(level=os.environ.get("GRABLY_LOG_LEVEL", "INFO"))
 
-ROOT = Path(__file__).resolve().parent.parent
-PUBLIC = ROOT / "public"  # everything the website serves (pages, CSS, JS, fonts, images)
-SECRET = (os.environ.get("GRABLY_SECRET") or secrets.token_hex(32)).encode()
-TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "0").lower() in ("1", "true", "yes")
+PUBLIC = site.PUBLIC  # everything the website serves (pages, CSS, JS, fonts, images)
+ON_VERCEL = os.environ.get("VERCEL") == "1"
+SECRET = (os.environ.get("GRABLY_SECRET") or "").encode()
+if not SECRET:
+    if ON_VERCEL:
+        # Each Vercel instance would pick its own random key and thumbnails would break
+        log.warning("GRABLY_SECRET isn't set; thumbnails may not load. Set it in the project's environment variables")
+    SECRET = secrets.token_hex(32).encode()
+# Behind a proxy that sets X-Forwarded-For (Vercel always does, and its value can't be faked)
+TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "1" if ON_VERCEL else "0").lower() in ("1", "true", "yes")
 PROXY_HOPS = max(1, int(os.environ.get("GRABLY_PROXY_HOPS", 1)))
 MAX_THUMB_BYTES = 5 * 1024 * 1024
 STALE_AFTER = 3 * 60 * 60  # seconds before an abandoned temp download folder is removed
 
 # Google AdSense: publisher ID (ca-pub-...) and the display ad unit ID used for the ad spaces.
-ADS_CLIENT = os.environ.get("GRABLY_ADSENSE_CLIENT", "").strip()
-ADS_SLOT = os.environ.get("GRABLY_ADSENSE_SLOT", "").strip()
-if ADS_CLIENT and not re.fullmatch(r"ca-pub-\d{10,20}", ADS_CLIENT):
-    log.warning("GRABLY_ADSENSE_CLIENT should look like ca-pub-1234567890123456; ads are off")
-    ADS_CLIENT = ""
-if ADS_SLOT and not re.fullmatch(r"\d{5,20}", ADS_SLOT):
-    log.warning("GRABLY_ADSENSE_SLOT should be the numeric ad unit ID; ads are off")
-    ADS_SLOT = ""
-GOOGLE_ADS_TXT_ID = "f08c47fec0942fa0"  # Google's fixed certification ID for ads.txt
+_ads = site.ads_from_env()
+ADS_CLIENT = _ads.client if _ads else ""
+ADS_SLOT = _ads.slot if _ads else ""
 
 
 # --------------------------------------------------------------------------
@@ -186,7 +184,7 @@ class InfoRequest(BaseModel):
 
 @app.get("/api/health")
 async def health():
-    return {"ok": True, "audio": downloader.settings.allow_audio}
+    return {"ok": True, "audio": downloader.settings.allow_audio and downloader.FFMPEG is not None}
 
 
 @app.post("/api/info")
@@ -246,29 +244,18 @@ async def thumb(u: str = Query(max_length=4096), s: str = Query(max_length=64)):
 # --------------------------------------------------------------------------
 # Website (only index.html and /assets are public, not the server code)
 # --------------------------------------------------------------------------
-VERSIONED_ASSETS = ("assets/css/styles.css", "assets/js/main.js")
 _page_cache: dict = {}
 
 
 def render_page(name: str) -> str:
-    """An HTML page with ?v=<content hash> added to the CSS and JS links, so browsers can cache
-    those files for a year and still get changes right away (the URL changes with the content).
-    On the home page, the AdSense IDs from the environment are filled into the meta tags."""
-    key = (ADS_CLIENT, ADS_SLOT, *((PUBLIC / p).stat().st_mtime_ns for p in (name, *VERSIONED_ASSETS)))
+    """An HTML page with versioned CSS/JS links and the AdSense IDs filled in (see site.render).
+    Cached until one of the files changes."""
+    ads = site.Ads(ADS_CLIENT, ADS_SLOT) if ADS_CLIENT and ADS_SLOT else None
+    key = (ads, *((PUBLIC / p).stat().st_mtime_ns for p in (name, *site.VERSIONED_ASSETS)))
     cached = _page_cache.get(name)
     if cached and cached[0] == key:
         return cached[1]
-    html = (PUBLIC / name).read_text(encoding="utf-8")
-    for rel in VERSIONED_ASSETS:
-        digest = hashlib.sha256((PUBLIC / rel).read_bytes()).hexdigest()[:10]
-        html = html.replace(f'"{rel}"', f'"{rel}?v={digest}"')
-    if ADS_CLIENT and ADS_SLOT:
-        html = html.replace(
-            '<meta name="grably-ads-client" content="">',
-            f'<meta name="grably-ads-client" content="{ADS_CLIENT}">\n'
-            f'  <meta name="google-adsense-account" content="{ADS_CLIENT}">',
-        )
-        html = html.replace('<meta name="grably-ads-slot" content="">', f'<meta name="grably-ads-slot" content="{ADS_SLOT}">')
+    html = site.render((PUBLIC / name).read_text(encoding="utf-8"), PUBLIC, ads)
     _page_cache[name] = (key, html)
     return html
 
@@ -291,11 +278,10 @@ async def privacy():
 @app.get("/ads.txt", include_in_schema=False)
 async def ads_txt():
     """Authorizes Google to sell ads on this site (AdSense checks for this file)."""
-    if not ADS_CLIENT:
+    txt = site.ads_txt(site.Ads(ADS_CLIENT, ADS_SLOT) if ADS_CLIENT and ADS_SLOT else None)
+    if not txt:
         return PlainTextResponse("Not found.\n", status_code=404)
-    publisher = ADS_CLIENT.removeprefix("ca-")
-    return PlainTextResponse(f"google.com, {publisher}, DIRECT, {GOOGLE_ADS_TXT_ID}\n",
-                             headers={"Cache-Control": "public, max-age=86400"})
+    return PlainTextResponse(txt, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/robots.txt", include_in_schema=False)
@@ -303,4 +289,5 @@ async def robots_txt():
     return FileResponse(PUBLIC / "robots.txt", media_type="text/plain", headers={"Cache-Control": "public, max-age=86400"})
 
 
-app.mount("/assets", StaticFiles(directory=PUBLIC / "assets"), name="assets")
+if (PUBLIC / "assets").is_dir():  # on Vercel the CDN serves public/ and it may not be bundled
+    app.mount("/assets", StaticFiles(directory=PUBLIC / "assets"), name="assets")

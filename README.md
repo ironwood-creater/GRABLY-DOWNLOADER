@@ -36,6 +36,8 @@ public/                    Everything the website serves:
   assets/fonts/            Inter and Outfit, self-hosted (SIL Open Font License)
 server/app.py              Web server: API routes, rate limits, serves the website
 server/downloader.py       Link checks, yt-dlp lookup and download
+server/site.py             Page versioning and AdSense IDs (also the Vercel build step)
+pyproject.toml, vercel.json  Vercel configuration (FastAPI app + static website)
 server/tests/              Tests (pytest)
 Dockerfile                 Production image (Python + ffmpeg)
 wrangler.jsonc             Cloudflare configuration (Worker, static files, Container)
@@ -74,7 +76,32 @@ pytest server/tests
 
 The tests include a real yt-dlp + ffmpeg download of a locally served clip; they skip that part if ffmpeg isn't installed.
 
-## Deploy to Cloudflare (recommended)
+## Deploy to Vercel
+
+On Vercel the website (`public/`) is served from Vercel's CDN and the download API runs as a
+**Vercel Function** (the FastAPI app in `server/app.py`, set in `pyproject.toml`). ffmpeg comes
+from the `imageio-ffmpeg` package, since Vercel Functions don't include it.
+
+1. In [Vercel](https://vercel.com/new), import this GitHub repository. Vercel detects FastAPI
+   from `pyproject.toml`; keep the default settings.
+2. Under **Settings → Environment Variables**, add:
+   - `GRABLY_SECRET`: a long random string (signs thumbnail links; needed because Vercel runs
+     several copies of the server).
+   - Optional: `GRABLY_ADSENSE_CLIENT` and `GRABLY_ADSENSE_SLOT` (see the AdSense section).
+     The build step (`python -m server.site`) adds them to the page and writes `/ads.txt`.
+3. Deploy. Every push to the production branch deploys again.
+
+Good to know:
+- **Plan:** Vercel's free Hobby plan is for personal, non-commercial projects. A site that
+  shows ads is commercial, so switch to **Pro** before turning AdSense on.
+- **Limits:** a download has to finish within 5 minutes (the most a Function may run on
+  Hobby; Pro allows more), files are capped at 200 MB (`GRABLY_MAX_MB`), and videos are
+  streamed to the visitor, which counts toward the plan's data transfer.
+- **Blocked downloads:** some sites block requests from cloud servers. If a platform keeps
+  failing on Vercel but works locally, that's the reason; a server with a home or
+  residential connection avoids it.
+
+## Deploy to Cloudflare
 
 On Cloudflare the website is served straight from Cloudflare's network (fast, even when nobody has visited for a while), and the download server runs in a **Cloudflare Container** built from the `Dockerfile`. The Worker in `cloudflare/worker.ts` sends `/api/…` requests to the container, adds your AdSense IDs to the page and serves `/ads.txt`. The container sleeps after 30 idle minutes and starts again on the next download, so the first download after a quiet period takes a few extra seconds.
 
@@ -173,7 +200,7 @@ Grably is completely free: there's no subscription or premium plan. The site ear
 1. Deploy the site on your own domain first (AdSense reviews a live site).
 2. Edit `public/privacy.html` and replace **[add your contact email]** with a real email address.
 3. Apply at [adsense.google.com](https://adsense.google.com) and add your site.
-4. Set your publisher ID (`ca-pub-…`): on Cloudflare in `ADSENSE_CLIENT` under `vars` in `wrangler.jsonc`, on other hosts in the `GRABLY_ADSENSE_CLIENT` environment variable. The site then automatically:
+4. Set your publisher ID (`ca-pub-…`): on Cloudflare in `ADSENSE_CLIENT` under `vars` in `wrangler.jsonc`, on Vercel and other hosts in the `GRABLY_ADSENSE_CLIENT` environment variable (on Vercel, redeploy after changing it). The site then automatically:
    - adds the `google-adsense-account` verification tag to the page, and
    - serves `/ads.txt` with the right line (`google.com, pub-…, DIRECT, f08c47fec0942fa0`).
 5. In AdSense, create a **Display ad** unit (responsive) and put its numeric ID in `ADSENSE_SLOT` (Cloudflare) or `GRABLY_ADSENSE_SLOT` (other hosts). Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
