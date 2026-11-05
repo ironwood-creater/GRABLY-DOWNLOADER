@@ -17,7 +17,7 @@ import time
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
@@ -256,6 +256,7 @@ class _YdlLogger:
 
 
 YdlFactory = Callable[[dict], "yt_dlp.YoutubeDL"]
+T = TypeVar("T")
 
 
 def _ydl_opts(platform: Optional[Platform], **extra) -> dict:
@@ -288,6 +289,27 @@ _FRIENDLY = (
     (("429", "rate-limit", "rate limit", "too many requests"), "That site is limiting requests right now. Try again in a minute."),
     (("not available", "unavailable", "404", "removed", "deleted", "does not exist"), "This video isn't available. It may have been removed."),
 )
+
+
+# Errors that usually go away when asked again a moment later, for example TikTok briefly
+# answering cloud servers with a bot check instead of the video page
+_TRANSIENT = ("unexpected response from webpage", "timed out", "connection reset", "remote end closed",
+              "http error 5", "temporarily unavailable")
+RETRY_DELAY = 1.5  # seconds
+
+
+def _retry_once(action: Callable[[], T], before_retry: Optional[Callable[[], None]] = None) -> T:
+    """Runs a yt-dlp step, and once more after a short pause if it failed with a passing error."""
+    try:
+        return action()
+    except DownloadError as e:
+        if not any(t in str(e).lower() for t in _TRANSIENT):
+            raise
+        log.info("retrying after a passing error: %s", e)
+        time.sleep(RETRY_DELAY)
+        if before_retry:
+            before_retry()
+        return action()
 
 
 def friendly_error(message: str) -> str:
@@ -391,9 +413,12 @@ def summarize(info: dict, platform: Platform, url: str) -> dict:
 def fetch_info(raw: str, *, peek: Optional[Peek] = None, ydl_factory: YdlFactory = yt_dlp.YoutubeDL) -> dict:
     """Look up a video without downloading it."""
     url, platform = resolve(extract_url(raw), peek)
-    try:
+    def look_up() -> dict:
         with ydl_factory(_ydl_opts(platform)) as ydl:
-            info = ydl.sanitize_info(ydl.extract_info(url, download=False))
+            return ydl.sanitize_info(ydl.extract_info(url, download=False))
+
+    try:
+        info = _retry_once(look_up)
     except DownloadError as e:
         log.info("info failed for %s: %s", url, e)
         raise VideoUnavailable(friendly_error(str(e))) from None
@@ -491,12 +516,23 @@ def download(
             max_filesize=settings.max_bytes,
             **format_opts(option),
         )
-        with ydl_factory(opts) as ydl:
-            info = _single_entry(ydl.extract_info(url, download=False))
-            duration = info.get("duration")
-            if duration and duration > settings.max_duration:
-                raise TooLarge(f"This video is too long. Grably downloads videos up to {settings.max_duration // 60} minutes.")
-            info = ydl.process_ie_result(info, download=True)
+
+        def fetch() -> dict:
+            with ydl_factory(opts) as ydl:
+                found = _single_entry(ydl.extract_info(url, download=False))
+                duration = found.get("duration")
+                if duration and duration > settings.max_duration:
+                    raise TooLarge(f"This video is too long. Grably downloads videos up to {settings.max_duration // 60} minutes.")
+                return ydl.process_ie_result(found, download=True)
+
+        def empty_tmp() -> None:
+            for leftover in tmp.iterdir():
+                if leftover.is_dir():
+                    shutil.rmtree(leftover, ignore_errors=True)
+                else:
+                    leftover.unlink(missing_ok=True)
+
+        info = _retry_once(fetch, before_retry=empty_tmp)
 
         files = [p for p in tmp.iterdir() if p.is_file() and not p.name.endswith((".part", ".ytdl", ".temp"))]
         if not files:

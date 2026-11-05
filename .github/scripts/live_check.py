@@ -16,12 +16,15 @@ UA = {"User-Agent": "Grably-live-check/1.0"}
 
 # Public videos that yt-dlp itself uses in its tests
 SAMPLES = {
-    "TikTok": ["https://www.tiktok.com/@leenabhushan/video/6748451240264420610",
-               "https://www.tiktok.com/@pokemonlife22/video/7059698374567611694"],
+    "TikTok": ["https://www.tiktok.com/@pokemonlife22/video/7059698374567611694",
+               "https://www.tiktok.com/@leenabhushan/video/6748451240264420610"],
     "Instagram": ["https://www.instagram.com/reel/Chunk8-jurw/", "https://www.instagram.com/p/BQ0eAlwhDrw/"],
-    "Facebook": ["https://www.facebook.com/radiokicksfm/videos/3676516585958356/",
-                 "https://www.facebook.com/video.php?v=637842556329505"],
-    "X": ["https://twitter.com/freethenipple/status/643211948184596480"],
+    "Facebook": ["https://www.facebook.com/reel/1195289147628387",
+                 "https://www.facebook.com/watch/?v=647537299265662",
+                 "https://www.facebook.com/radiokicksfm/videos/3676516585958356/"],
+    "X": ["https://twitter.com/JessicaDobsonWX/status/1731121063248175384",
+          "https://twitter.com/playstrumpcard/status/1695424220702888009",
+          "https://twitter.com/s2FAKER/status/1621117700482416640"],
     "Pinterest": ["https://www.pinterest.com/pin/664281013778109217/",
                   "https://www.pinterest.com/pin/1084663891475263837/"],
 }
@@ -66,7 +69,6 @@ def main():
     status, _, body, _, t = request("GET", "/api/health")
     line(status == 200, f"health {status} {body.decode(errors='replace')} in {t:.1f}s")
 
-    downloaded = False
     for platform, links in SAMPLES.items():
         for link in links:
             status, _, body, _, t = request("POST", "/api/info", {"url": link})
@@ -82,7 +84,7 @@ def main():
             if data.get("thumbnail"):
                 s, h, _, size, _ = request("GET", data["thumbnail"])
                 line(s == 200, f"{platform} thumbnail {s} {h.get('Content-Type')} {size} bytes")
-            if not downloaded or platform in ("TikTok", "X"):
+            if data["options"]:
                 option = data["options"][0]["id"]
                 query = urllib.parse.urlencode({"url": data["url"], "option": option})
                 s, h, head, size, t = request("GET", f"/api/download?{query}", read_limit=16)
@@ -90,7 +92,6 @@ def main():
                 line(ok, f"{platform} download {option}: {s} {h.get('Content-Type')} "
                          f"length={h.get('Content-Length')} got={size} bytes in {t:.1f}s "
                          f"name={h.get('Content-Disposition')}" + ("" if ok else f" body={head[:200]!r}"))
-                downloaded = downloaded or ok
             break  # one working link per platform is enough
 
 

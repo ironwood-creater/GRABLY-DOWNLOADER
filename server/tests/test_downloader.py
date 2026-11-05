@@ -216,3 +216,41 @@ def test_format_opts_prefer_compatible_mp4():
 def test_download_rejects_unknown_options(option):
     with pytest.raises(d.InvalidLink):
         d.download("https://www.tiktok.com/@a/video/1", option)
+
+
+# ---------------------------------------------------------------- retries
+def test_passing_errors_are_retried_once(monkeypatch):
+    monkeypatch.setattr(d, "RETRY_DELAY", 0)
+    calls, cleaned = [], []
+
+    def flaky():
+        calls.append(1)
+        if len(calls) == 1:
+            raise d.DownloadError("ERROR: [TikTok] 123: Unexpected response from webpage request")
+        return "ok"
+
+    assert d._retry_once(flaky, before_retry=lambda: cleaned.append(1)) == "ok"
+    assert len(calls) == 2 and cleaned == [1]
+
+
+def test_lasting_errors_are_not_retried(monkeypatch):
+    monkeypatch.setattr(d, "RETRY_DELAY", 0)
+    calls = []
+
+    def private():
+        calls.append(1)
+        raise d.DownloadError("ERROR: This video is private")
+
+    with pytest.raises(d.DownloadError):
+        d._retry_once(private)
+    assert len(calls) == 1
+
+
+def test_a_second_failure_is_reported(monkeypatch):
+    monkeypatch.setattr(d, "RETRY_DELAY", 0)
+
+    def always():
+        raise d.DownloadError("ERROR: Read timed out")
+
+    with pytest.raises(d.DownloadError):
+        d._retry_once(always)
