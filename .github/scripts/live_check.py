@@ -1,0 +1,98 @@
+"""Checks a live Grably site: pages, the API, and real lookups and downloads on each platform.
+
+    python .github/scripts/live_check.py https://grably-downloader-server.vercel.app
+
+Prints one line per check and never downloads more than it needs to report on.
+"""
+import json
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://grably-downloader-server.vercel.app").rstrip("/")
+UA = {"User-Agent": "Grably-live-check/1.0"}
+
+# Public videos that yt-dlp itself uses in its tests
+SAMPLES = {
+    "TikTok": ["https://www.tiktok.com/@leenabhushan/video/6748451240264420610",
+               "https://www.tiktok.com/@pokemonlife22/video/7059698374567611694"],
+    "Instagram": ["https://www.instagram.com/reel/Chunk8-jurw/", "https://www.instagram.com/p/BQ0eAlwhDrw/"],
+    "Facebook": ["https://www.facebook.com/radiokicksfm/videos/3676516585958356/",
+                 "https://www.facebook.com/video.php?v=637842556329505"],
+    "X": ["https://twitter.com/freethenipple/status/643211948184596480"],
+    "Pinterest": ["https://www.pinterest.com/pin/664281013778109217/",
+                  "https://www.pinterest.com/pin/1084663891475263837/"],
+}
+
+
+def request(method, path, body=None, read_limit=None, timeout=310):
+    url = path if path.startswith("http") else BASE + path
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method,
+                                 headers={**UA, **({"Content-Type": "application/json"} if data else {})})
+    start = time.monotonic()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            if read_limit is None:
+                content = r.read()
+                size = len(content)
+            else:
+                size, content = 0, b""
+                while chunk := r.read(256 * 1024):
+                    size += len(chunk)
+                    if len(content) < read_limit:
+                        content += chunk[: read_limit - len(content)]
+            return r.status, dict(r.headers), content, size, time.monotonic() - start
+    except urllib.error.HTTPError as e:
+        content = e.read()
+        return e.code, dict(e.headers), content, len(content), time.monotonic() - start
+    except Exception as e:  # network errors, timeouts
+        return 0, {}, str(e).encode(), 0, time.monotonic() - start
+
+
+def line(ok, text):
+    print(("PASS " if ok else "FAIL ") + text, flush=True)
+    return ok
+
+
+def main():
+    print(f"Checking {BASE}\n")
+    status, _, html, _, t = request("GET", "/")
+    line(status == 200 and b"styles.css?v=" in html, f"home page {status} in {t:.1f}s, versioned CSS: {b'styles.css?v=' in html}")
+    status, _, _, _, t = request("GET", "/privacy")
+    line(status == 200, f"privacy page {status}")
+    status, _, body, _, t = request("GET", "/api/health")
+    line(status == 200, f"health {status} {body.decode(errors='replace')} in {t:.1f}s")
+
+    downloaded = False
+    for platform, links in SAMPLES.items():
+        for link in links:
+            status, _, body, _, t = request("POST", "/api/info", {"url": link})
+            try:
+                data = json.loads(body)
+            except ValueError:
+                data = {"error": body[:120].decode(errors="replace")}
+            if status != 200:
+                line(False, f"{platform} info {status} in {t:.1f}s: {data.get('error')}  ({link})")
+                continue
+            options = [o["id"] + (f"~{o['size'] // 1_000_000}MB" if o.get("size") else "") for o in data["options"]]
+            line(True, f"{platform} info in {t:.1f}s: {data['title'][:50]!r} options={options}")
+            if data.get("thumbnail"):
+                s, h, _, size, _ = request("GET", data["thumbnail"])
+                line(s == 200, f"{platform} thumbnail {s} {h.get('Content-Type')} {size} bytes")
+            if not downloaded or platform in ("TikTok", "X"):
+                option = data["options"][0]["id"]
+                query = urllib.parse.urlencode({"url": data["url"], "option": option})
+                s, h, head, size, t = request("GET", f"/api/download?{query}", read_limit=16)
+                ok = s == 200 and size > 10_000
+                line(ok, f"{platform} download {option}: {s} {h.get('Content-Type')} "
+                         f"length={h.get('Content-Length')} got={size} bytes in {t:.1f}s "
+                         f"name={h.get('Content-Disposition')}" + ("" if ok else f" body={head[:200]!r}"))
+                downloaded = downloaded or ok
+            break  # one working link per platform is enough
+
+
+if __name__ == "__main__":
+    main()

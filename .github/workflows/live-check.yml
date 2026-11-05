@@ -1,0 +1,26 @@
+# Checks the live website: pages, API, and real lookups/downloads on each platform.
+# Run it from the Actions tab ("Live site check" → Run workflow) after a deploy.
+name: Live site check
+
+on:
+  push:
+    branches: [claude/blissful-knuth-6pfc4b]
+    paths: [".github/workflows/live-check.yml", ".github/scripts/live_check.py"]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Site to check"
+        required: false
+        default: "https://grably-downloader-server.vercel.app"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the live site
+        run: python3 .github/scripts/live_check.py "${{ inputs.base_url || 'https://grably-downloader-server.vercel.app' }}"
