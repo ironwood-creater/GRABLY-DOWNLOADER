@@ -126,7 +126,7 @@ class ScreenshotTest {
         shell("screencap -p $DIR/$name.png")
     }
 
-    /** Full battery, full signal, 9:41 and no notification icons. */
+    /** Full battery, full Wi-Fi, 9:41 and no notification icons. */
     private fun cleanStatusBar() {
         shell("settings put global sysui_demo_allowed 1")
         val demo = "am broadcast -a com.android.systemui.demo -e command"
@@ -134,7 +134,7 @@ class ScreenshotTest {
         shell("$demo clock -e hhmm 0941")
         shell("$demo battery -e level 100 -e plugged false")
         shell("$demo network -e wifi show -e level 4 -e fully true")
-        shell("$demo network -e mobile show -e datatype none -e level 4 -e fully true")
+        shell("$demo network -e mobile hide")
         shell("$demo notifications -e visible false")
     }
 

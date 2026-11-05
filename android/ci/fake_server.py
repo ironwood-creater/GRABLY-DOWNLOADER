@@ -24,9 +24,9 @@ def opt(id_, kind, fmt, quality, size):
     return {"id": id_, "kind": kind, "format": fmt, "quality": quality, "size": size}
 
 
-# Picked by a word in the link; the first entry is used for anything else
+# Picked by a part of the link (keep them distinct: none may contain another); the first is the fallback
 VIDEOS = {
-    "1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grably/video/1234567890", "Grably test clip",
+    "@grably/video/1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grably/video/1234567890", "Grably test clip",
                         "grably", 12, None, [opt("v720", "video", "MP4", "720p", SIZE),
                                              opt("audio", "audio", "MP3", "Audio only", 40_000)]),
     "ava.travels": video("tiktok", "TikTok", "https://www.tiktok.com/@ava.travels/video/7301234567890",
