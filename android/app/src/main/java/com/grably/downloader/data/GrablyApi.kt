@@ -40,7 +40,7 @@ class GrablyApi(baseUrl: String, private val client: OkHttpClient) {
             .build()
         val (code, text) = try {
             client.newCall(request).execute().use { response ->
-                response.code to response.body?.string().orEmpty()
+                response.code to response.body.string()
             }
         } catch (e: IOException) {
             throw ApiException(NETWORK_ERROR)

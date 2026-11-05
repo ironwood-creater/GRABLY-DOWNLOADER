@@ -47,9 +47,9 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
                 val request = Request.Builder().url(container.api.downloadUrl(item.sourceUrl, item.optionId)).build()
                 container.httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw ApiException(container.api.errorMessage(response.code, response.body?.string().orEmpty()))
+                        throw ApiException(container.api.errorMessage(response.code, response.body.string()))
                     }
-                    val body = response.body ?: throw ApiException(GrablyApi.GENERIC_ERROR)
+                    val body = response.body
                     val total = body.contentLength().coerceAtLeast(0)
                     val mimeType = response.header("Content-Type")?.substringBefore(';')?.trim()?.ifEmpty { null }
                         ?: if (item.isAudio) "audio/mpeg" else "video/mp4"
