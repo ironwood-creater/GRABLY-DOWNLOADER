@@ -92,9 +92,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         } catch (e: CancellationException) {
             // Cancelled by the user, or paused by Android (for example when the connection drops)
             pending?.let { MediaStoreFiles.discard(applicationContext, it) }
-            withContext(NonCancellable) {
-                if (dao.get(id)?.status == DownloadStatus.RUNNING) dao.setProgress(id, DownloadStatus.QUEUED, 0, item.totalBytes)
-            }
+            withContext(NonCancellable) { dao.requeueIfRunning(id) }
             throw e
         } catch (e: Exception) {
             pending?.let { MediaStoreFiles.discard(applicationContext, it) }

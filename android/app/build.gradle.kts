@@ -5,8 +5,25 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// Download server address, from gradle.properties (or -Pgrably.apiBaseUrl=... on the command line)
+// Download server address. The live Grably site on Vercel unless -Pgrably.apiBaseUrl=... says otherwise
+// (CI passes the stand-in server for the device test).
+val defaultApiBaseUrl = "https://grably-downloader-server.vercel.app"
 val apiBaseUrl: String = (findProperty("grably.apiBaseUrl") as String?).orEmpty().trim().trimEnd('/')
+    .ifEmpty { defaultApiBaseUrl }
+
+// Google Play needs a higher versionCode for every upload: CI passes the run number.
+val appVersionCode = (findProperty("grably.versionCode") as String?)?.toIntOrNull() ?: 1
+val appVersionName = (findProperty("grably.versionName") as String?)?.ifBlank { null } ?: "1.0.0"
+
+// Upload key for Google Play, from environment variables (GitHub secrets in CI) or gradle properties.
+// Without it, release builds are unsigned and have to be signed before uploading.
+fun secret(name: String): String? =
+    (System.getenv(name) ?: findProperty(name.lowercase().replace('_', '.')) as String?)?.ifBlank { null }
+val keystorePath = secret("GRABLY_KEYSTORE_FILE")
+val keystorePassword = secret("GRABLY_KEYSTORE_PASSWORD")
+val keyAliasName = secret("GRABLY_KEY_ALIAS")
+val keyPasswordValue = secret("GRABLY_KEY_PASSWORD") ?: keystorePassword
+val canSignRelease = keystorePath != null && keystorePassword != null && keyAliasName != null && file(keystorePath).isFile
 
 android {
     namespace = "com.grably.downloader"
@@ -16,14 +33,26 @@ android {
         applicationId = "com.grably.downloader"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (canSignRelease) {
+            create("upload") {
+                storeFile = file(keystorePath!!)
+                storePassword = keystorePassword
+                keyAlias = keyAliasName
+                keyPassword = keyPasswordValue
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (canSignRelease) signingConfig = signingConfigs.getByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

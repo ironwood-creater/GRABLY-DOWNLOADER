@@ -349,7 +349,7 @@ private fun StatusLine(state: HomeUiState) {
                 .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlatformBadge(state.detected, size = 20.dp)
+            PlatformBadge(state.detected, size = 20.dp, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(
                 "${state.detected.displayName} link found. Tap download.",
@@ -376,18 +376,26 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PlatformRow(onOpen: (Platform) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(Modifier.fillMaxWidth()) {
         Platform.entries.forEach { platform ->
+            // Equal shares of the width, so all five fit on small phones too
             Column(
                 Modifier
+                    .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
                     .clickable(role = Role.Button, onClickLabel = "Open ${platform.displayName}") { onOpen(platform) }
                     .padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                PlatformBadge(platform, size = 52.dp)
+                PlatformBadge(platform, size = 48.dp, contentDescription = null)
                 Spacer(Modifier.height(6.dp))
-                Text(platform.displayName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.grably.muted)
+                Text(
+                    platform.displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.grably.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

@@ -25,6 +25,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +54,7 @@ fun VideoSheet(video: VideoInfo, onDismiss: () -> Unit, onDownload: (DownloadOpt
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val platform = Platform.fromKey(video.platform)
+    var chosen by remember { mutableStateOf(false) } // ignore a second tap while the sheet closes
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -107,7 +112,10 @@ fun VideoSheet(video: VideoInfo, onDismiss: () -> Unit, onDownload: (DownloadOpt
                         option = option,
                         recommended = index == 0,
                         onClick = {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion { onDownload(option) }
+                            if (!chosen) {
+                                chosen = true
+                                scope.launch { sheetState.hide() }.invokeOnCompletion { onDownload(option) }
+                            }
                         },
                     )
                 }

@@ -66,6 +66,10 @@ interface DownloadDao {
     @Query("UPDATE downloads SET status = 'QUEUED', bytesDownloaded = 0, error = NULL WHERE id = :id")
     suspend fun resetForRetry(id: Long)
 
+    /** Back to the queue after Android paused the download, unless it was cancelled meanwhile (one atomic step). */
+    @Query("UPDATE downloads SET status = 'QUEUED', bytesDownloaded = 0 WHERE id = :id AND status = 'RUNNING'")
+    suspend fun requeueIfRunning(id: Long)
+
     @Query("DELETE FROM downloads WHERE id = :id")
     suspend fun delete(id: Long)
 }

@@ -57,7 +57,12 @@ fun GrablyMark(modifier: Modifier = Modifier, size: Dp = 40.dp) {
 
 /** Round platform logo in the platform's brand colour. */
 @Composable
-fun PlatformBadge(platform: Platform, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+fun PlatformBadge(
+    platform: Platform,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    contentDescription: String? = platform.displayName,
+) {
     val background: Brush = when (platform) {
         Platform.TikTok, Platform.X -> Brush.linearGradient(listOf(Color.Black, Color.Black))
         Platform.Instagram -> Brush.linearGradient(
@@ -81,7 +86,7 @@ fun PlatformBadge(platform: Platform, modifier: Modifier = Modifier, size: Dp = 
             .border(1.dp, Color.White.copy(alpha = 0.14f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = platform.displayName, tint = Color.White, modifier = Modifier.size(size * 0.5f))
+        Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(size * 0.5f))
     }
 }
 

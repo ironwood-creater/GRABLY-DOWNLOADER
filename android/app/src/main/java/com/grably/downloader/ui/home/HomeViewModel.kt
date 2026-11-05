@@ -109,7 +109,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     /** A link shared to Grably from another app's Share menu. */
     fun onShared(text: String) {
-        _state.update { it.copy(video = null) }
+        lookupJob?.cancel()
+        _state.update { it.copy(video = null, loading = false) }
         onInputChange(text)
         lookup()
     }

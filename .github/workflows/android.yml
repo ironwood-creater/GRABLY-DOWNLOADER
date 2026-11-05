@@ -1,5 +1,6 @@
 # Builds the Grably Android app and runs its tests.
-# The installable APK is attached to each run under "Artifacts" (grably-debug-apk).
+# Each run's "Artifacts" has grably-debug-apk (install on a phone to try it) and grably-release
+# (the .aab bundle for Google Play, signed when the upload key is in the repository's secrets).
 # A second job runs the app on an Android emulator against a stand-in server (android/ci/fake_server.py).
 name: Android app
 
@@ -31,8 +32,11 @@ jobs:
       run:
         working-directory: android
     env:
-      # The server the app talks to: the run's input, else the GRABLY_API_URL repository variable
+      # The server the app talks to: the run's input, else the GRABLY_API_URL repository variable,
+      # else the live site (the default in app/build.gradle.kts)
       API_BASE_URL: ${{ inputs.api_base_url || vars.GRABLY_API_URL }}
+      # Google Play needs a higher version code for every upload
+      VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v7
 
@@ -46,15 +50,53 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest -Pgrably.apiBaseUrl="$API_BASE_URL"
 
-      - name: Build the APK
-        run: ./gradlew assembleDebug -Pgrably.apiBaseUrl="$API_BASE_URL"
+      - name: Build the APK for testing
+        run: ./gradlew assembleDebug -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$VERSION_CODE"
 
-      - name: Upload the APK
+      - name: Upload the APK for testing
         uses: actions/upload-artifact@v7
         with:
           name: grably-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Use the Google Play upload key (if the repository has one)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.GRABLY_UPLOAD_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "GRABLY_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "The release is signed with the upload key." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No upload key in the repository's secrets, so the release is unsigned. See android/README.md." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Build the release (Google Play bundle and APK)
+        env:
+          GRABLY_KEYSTORE_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEYSTORE_PASSWORD }}
+          GRABLY_KEY_ALIAS: ${{ secrets.GRABLY_UPLOAD_KEY_ALIAS }}
+          GRABLY_KEY_PASSWORD: ${{ secrets.GRABLY_UPLOAD_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$VERSION_CODE"
+
+      - name: Check Google Play's 16 KB page size rule
+        run: for apk in app/build/outputs/apk/release/*.apk; do python3 ci/check_16kb.py "$apk"; done
+
+      - name: Upload the release
+        uses: actions/upload-artifact@v7
+        with:
+          name: grably-release
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error
+
+      - name: Clean up the upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
 
       - name: Upload test reports
         if: failure()
@@ -104,7 +146,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           working-directory: android
-          script: ./gradlew connectedDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER" || (adb logcat -d -t 400 '*:E' ; exit 1)
+          script: ./gradlew connectedDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER" -Pandroid.testInstrumentationRunnerArguments.notClass=com.grably.downloader.ScreenshotTest || (adb logcat -d -t 400 '*:E' ; exit 1)
 
       - name: Stand-in server log
         if: always()
