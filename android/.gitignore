@@ -7,3 +7,7 @@ local.properties
 captures/
 *.keystore
 *.jks
+
+# Release bundles are signed outside the repository
+release/
+*.aab

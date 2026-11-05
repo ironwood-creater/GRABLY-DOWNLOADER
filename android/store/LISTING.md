@@ -122,6 +122,7 @@ the app and pulling down the notification shade to show the progress notificatio
 | Internet, network state | Look up and download videos |
 | Notifications | Download progress and "saved" messages (asked on the first download) |
 | Foreground service (data sync) | Keep a download going in the background |
+| Wake lock, run at startup | Added by Android's WorkManager library, so queued downloads resume after a restart |
 
 No storage, camera, location, contacts or "all apps" permissions.
 
