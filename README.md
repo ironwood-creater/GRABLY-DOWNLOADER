@@ -195,6 +195,10 @@ If you host the page without the Python server, put the two IDs in the `grably-a
 3. **Domain**: once you have one, change `og:image` in `public/index.html` to an absolute URL (for example `https://yourdomain.com/assets/img/og-image.png`) so link previews work.
 4. **Copy review**: check the FAQ against how the site and app actually behave.
 
+## Android app
+
+The Android app is in [`android/`](android/README.md). It uses this same server. GitHub Actions builds an installable APK on every change; see the Android README for how to set the server address and get the APK.
+
 ## When the phone app launches
 
 Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the footer line under the logo, and the FAQ entry "When is the phone app coming?". The original App Store / Google Play buttons are in this repository's history (commit `72d094f`).
@@ -203,7 +207,7 @@ Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the
 
 - **Colors**: the theme is teal on dark navy, from the logo. Edit the variables in `:root` at the top of `styles.css`: `--teal-500` (`#10B3A3`) is the accent and `--navy-900` (`#0B1A33`) the background. Buttons use navy text on teal, because white on teal is too low-contrast to read comfortably. App mockups keep a light palette, set in the block right after `:root`.
 - **Fonts**: Outfit (headings and mockups) and Inter (body), self-hosted in `public/assets/fonts/` (Latin and Latin-Extended character sets).
-- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `public/assets/js/main.js` (instant feedback in the browser). Keep them in sync.
+- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `public/assets/js/main.js` (instant feedback in the browser), plus `LinkDetector` in `android/app/src/main/java/com/grably/downloader/data/Platform.kt` (the Android app). Keep them in sync.
 
 ## Credits
 
