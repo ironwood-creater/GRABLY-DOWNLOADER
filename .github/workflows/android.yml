@@ -35,8 +35,9 @@ jobs:
       # The server the app talks to: the run's input, else the GRABLY_API_URL repository variable,
       # else the live site (the default in app/build.gradle.kts)
       API_BASE_URL: ${{ inputs.api_base_url || vars.GRABLY_API_URL }}
-      # Google Play needs a higher version code for every upload
-      VERSION_CODE: ${{ github.run_number }}
+      # Google Play needs a higher version code for every upload: 100 + the run number
+      # (codes below 100 are for bundles built and signed by hand, such as version 1.1.0 = 20)
+      RUN_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v7
 
@@ -51,7 +52,7 @@ jobs:
         run: ./gradlew testDebugUnitTest -Pgrably.apiBaseUrl="$API_BASE_URL"
 
       - name: Build the APK for testing
-        run: ./gradlew assembleDebug -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$VERSION_CODE"
+        run: ./gradlew assembleDebug -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$((RUN_NUMBER + 100))"
 
       - name: Upload the APK for testing
         uses: actions/upload-artifact@v7
@@ -101,7 +102,7 @@ jobs:
           echo "The release is signed with the upload key." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build the release (Google Play bundle and APK)
-        run: ./gradlew bundleRelease assembleRelease -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$VERSION_CODE"
+        run: ./gradlew bundleRelease assembleRelease -Pgrably.apiBaseUrl="$API_BASE_URL" -Pgrably.versionCode="$((RUN_NUMBER + 100))"
 
       - name: Check Google Play's 16 KB page size rule
         run: for apk in app/build/outputs/apk/release/*.apk; do python3 ci/check_16kb.py "$apk"; done
