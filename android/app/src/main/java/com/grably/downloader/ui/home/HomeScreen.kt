@@ -153,7 +153,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Paste a link from TikTok, Instagram, Facebook, X, Reddit and more.",
+                "Paste a link from TikTok, Instagram, Facebook, X, Pinterest, Twitch or Tumblr.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.grably.muted,
             )

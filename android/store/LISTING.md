@@ -45,7 +45,7 @@ WHY GRABLY
 • No storage permission needed
 
 SUPPORTED LINKS
-Grably works with public video links from TikTok, Instagram, Facebook, X, Pinterest, Reddit, Vimeo, Dailymotion, Snapchat Spotlight, Twitch clips and past streams, LinkedIn, Tumblr and Bilibili, and with SoundCloud tracks (saved as MP3).
+Grably works with public video links from TikTok, Instagram, Facebook, X, Pinterest, Twitch (clips and past streams) and Tumblr.
 
 PLEASE NOTE
 Only download videos you own or have permission to save, and respect the rights of creators. Private videos and videos that need a login can't be downloaded.

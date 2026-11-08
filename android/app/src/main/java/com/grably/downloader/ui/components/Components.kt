@@ -34,9 +34,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.vector.ImageVector
 import coil3.compose.AsyncImage
 import com.grably.downloader.data.Platform
@@ -76,23 +73,11 @@ fun PlatformBadge(
             .border(1.dp, Color.White.copy(alpha = 0.14f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (style.icon != null) {
-            Icon(style.icon, contentDescription = contentDescription, tint = style.tint, modifier = Modifier.size(size * 0.5f))
-        } else {
-            // LinkedIn's logo isn't in Simple Icons: plain lettering instead
-            val label = contentDescription
-            Text(
-                "in",
-                color = style.tint,
-                fontWeight = FontWeight.Bold,
-                fontSize = (size.value * 0.42f).sp,
-                modifier = Modifier.semantics { if (label != null) this.contentDescription = label },
-            )
-        }
+        Icon(style.icon, contentDescription = contentDescription, tint = style.tint, modifier = Modifier.size(size * 0.5f))
     }
 }
 
-private class BrandStyle(val background: Brush, val icon: ImageVector?, val tint: Color = Color.White)
+private class BrandStyle(val background: Brush, val icon: ImageVector, val tint: Color = Color.White)
 
 private fun solid(hex: Long) = Brush.linearGradient(listOf(Color(hex), Color(hex)))
 
@@ -105,15 +90,8 @@ private fun brandStyle(platform: Platform): BrandStyle = when (platform) {
     Platform.Facebook -> BrandStyle(solid(0xFF1877F2), GrablyIcons.BrandFacebook)
     Platform.X -> BrandStyle(solid(0xFF000000), GrablyIcons.BrandX)
     Platform.Pinterest -> BrandStyle(solid(0xFFE60023), GrablyIcons.BrandPinterest)
-    Platform.Reddit -> BrandStyle(solid(0xFFFF4500), GrablyIcons.BrandReddit)
-    Platform.Vimeo -> BrandStyle(solid(0xFF1AB7EA), GrablyIcons.BrandVimeo)
-    Platform.Dailymotion -> BrandStyle(solid(0xFF0A0A0A), GrablyIcons.BrandDailymotion)
-    Platform.Snapchat -> BrandStyle(solid(0xFFFFFC00), GrablyIcons.BrandSnapchat, tint = Color.Black)
     Platform.Twitch -> BrandStyle(solid(0xFF9146FF), GrablyIcons.BrandTwitch)
-    Platform.LinkedIn -> BrandStyle(solid(0xFF0A66C2), icon = null)
     Platform.Tumblr -> BrandStyle(solid(0xFF36465D), GrablyIcons.BrandTumblr)
-    Platform.SoundCloud -> BrandStyle(solid(0xFFFF5500), GrablyIcons.BrandSoundCloud)
-    Platform.Bilibili -> BrandStyle(solid(0xFF00A1D6), GrablyIcons.BrandBilibili)
 }
 
 /** A video thumbnail with a soft gradient behind it while it loads (or if there is none). */

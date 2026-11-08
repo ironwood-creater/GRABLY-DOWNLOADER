@@ -1,7 +1,7 @@
 """Look up and download videos from supported platforms with yt-dlp.
 
 Only links from the sites in PLATFORMS are accepted (TikTok, Instagram, Facebook, X/Twitter,
-Pinterest, Reddit, Vimeo, Dailymotion, Snapchat, Twitch, LinkedIn, Tumblr, SoundCloud, Bilibili).
+Pinterest, Twitch and Tumblr).
 Every URL is checked against an allowlist before anything is fetched, short
 links are followed one redirect at a time (each hop is checked again), and
 yt-dlp is limited to the matching extractors. That way the server can't be
@@ -142,26 +142,15 @@ PLATFORMS: tuple[Platform, ...] = (
         "pinterest", "Pinterest", ("pin.it",), ("pinterest",),
         re.compile(r"(?:^|\.)pinterest\.(?:[a-z]{2,4}|co\.[a-z]{2}|com\.[a-z]{2})$"),
     ),
-    Platform("reddit", "Reddit", ("reddit.com", "redd.it"), ("reddit",)),
-    Platform("vimeo", "Vimeo", ("vimeo.com",), ("vimeo",)),
-    Platform("dailymotion", "Dailymotion", ("dailymotion.com", "dai.ly"), ("dailymotion",)),
-    Platform("snapchat", "Snapchat", ("snapchat.com",), ("snapchatspotlight",)),
     # Clips and past broadcasts; live streams can't be downloaded
     Platform("twitch", "Twitch", ("twitch.tv",), ("twitch:clips", "twitch:vod")),
-    Platform("linkedin", "LinkedIn", ("linkedin.com", "lnkd.in"), ("linkedin",)),
     Platform("tumblr", "Tumblr", ("tumblr.com", "tmblr.co"), ("tumblr",)),
-    # Sound only: offered as MP3
-    Platform("soundcloud", "SoundCloud", ("soundcloud.com",), ("soundcloud",)),
-    Platform("bilibili", "Bilibili", ("bilibili.com", "bilibili.tv", "b23.tv"), ("bilibili", "biliintl")),
 )
 SUPPORTED_NAMES = ", ".join(p.name for p in PLATFORMS[:-1]) + " and " + PLATFORMS[-1].name
 
 # Short links that redirect to the real post. We follow these ourselves.
-SHORT_HOSTS = {"t.co", "pin.it", "fb.watch", "vm.tiktok.com", "vt.tiktok.com", "instagr.am",
-               "redd.it", "v.redd.it", "lnkd.in", "tmblr.co", "on.soundcloud.com", "b23.tv"}
+SHORT_HOSTS = {"t.co", "pin.it", "fb.watch", "vm.tiktok.com", "vt.tiktok.com", "instagr.am", "tmblr.co"}
 SHARE_PATH_HOSTS = ("instagram.com", "facebook.com")  # .../share/... links redirect too
-# Other share links that redirect to the post: reddit.com/r/<sub>/s/<id>, snapchat.com/t/<id>
-SHARE_PATHS = (("reddit.com", re.compile(r"/r/[^/]+/s/[^/]+/?$")), ("snapchat.com", re.compile(r"/t/[^/]+/?$")))
 
 URL_IN_TEXT = re.compile(r"https?://[^\s<>\"']+|(?:[a-z0-9-]+\.)+[a-z]{2,}/[^\s<>\"']*", re.I)
 
@@ -216,10 +205,9 @@ def _needs_resolving(url: str) -> bool:
     host = parts.hostname or ""
     if host in SHORT_HOSTS:
         return True
-    on = lambda d: host == d or host.endswith("." + d)  # noqa: E731
-    if parts.path.startswith("/share/") and any(on(d) for d in SHARE_PATH_HOSTS):
-        return True
-    return any(on(d) and pattern.match(parts.path) for d, pattern in SHARE_PATHS)
+    return parts.path.startswith("/share/") and any(
+        host == d or host.endswith("." + d) for d in SHARE_PATH_HOSTS
+    )
 
 
 # A "peek" returns (status_code, Location header) without following redirects.
@@ -385,7 +373,7 @@ def summarize(info: dict, platform: Platform, url: str) -> dict:
     info = _single_entry(info)
     formats = info.get("formats") or ([info] if info.get("url") else [])
     videos = [f for f in formats if _has_video(f)]
-    sound_only = not videos and any(_has_audio(f) for f in formats)  # e.g. a SoundCloud track
+    sound_only = not videos and any(_has_audio(f) for f in formats)  # e.g. a Tumblr audio post
     if not videos and not (sound_only and settings.allow_audio and FFMPEG):
         raise VideoUnavailable("There's no downloadable video in that post.")
     duration = info.get("duration")

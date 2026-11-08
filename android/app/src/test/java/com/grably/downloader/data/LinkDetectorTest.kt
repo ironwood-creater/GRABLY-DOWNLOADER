@@ -41,27 +41,19 @@ class LinkDetectorTest {
     }
 
     @Test
-    fun findsTheNewerSites() {
-        val cases = mapOf(
-            "https://www.reddit.com/r/videos/comments/abc123/funny_cat/" to Platform.Reddit,
-            "https://redd.it/abc123" to Platform.Reddit,
-            "https://vimeo.com/76979871" to Platform.Vimeo,
-            "https://dai.ly/x8abcd" to Platform.Dailymotion,
-            "https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAA" to Platform.Snapchat,
-            "https://clips.twitch.tv/FunnyClipName" to Platform.Twitch,
-            "https://www.linkedin.com/posts/someone_video-activity-7012345678901234567-AbCd" to Platform.LinkedIn,
-            "https://staff.tumblr.com/post/123456789" to Platform.Tumblr,
-            "https://on.soundcloud.com/AbCd" to Platform.SoundCloud,
-            "https://b23.tv/AbCdEf" to Platform.Bilibili,
-            "https://www.bilibili.tv/en/video/2010000000" to Platform.Bilibili,
-        )
-        for ((text, platform) in cases) assertEquals(text, platform, supported(text).platform)
+    fun findsTwitchAndTumblr() {
+        assertEquals(Platform.Twitch, supported("https://clips.twitch.tv/FunnyClipName").platform)
+        assertEquals(Platform.Twitch, supported("https://www.twitch.tv/videos/123456789").platform)
+        assertEquals(Platform.Tumblr, supported("https://staff.tumblr.com/post/123456789").platform)
+        assertEquals(Platform.Tumblr, supported("https://tmblr.co/AbCd").platform)
     }
 
     @Test
-    fun youTubeIsStillNotSupported() {
-        assertEquals(LinkCheck.Unsupported("youtube.com"), LinkDetector.check("https://youtube.com/watch?v=1"))
-        assertTrue(Platform.allNames.endsWith("SoundCloud and Bilibili"))
+    fun sitesGrablyDoesntSupportAreRefused() {
+        for (host in listOf("youtube.com", "reddit.com", "vimeo.com", "soundcloud.com", "linkedin.com", "bilibili.com")) {
+            assertEquals(host, LinkCheck.Unsupported(host), LinkDetector.check("https://$host/some/video"))
+        }
+        assertEquals("TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr", Platform.allNames)
         assertEquals(5, Platform.featured.size)
     }
 

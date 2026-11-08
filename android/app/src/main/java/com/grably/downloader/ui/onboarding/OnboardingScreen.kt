@@ -93,7 +93,7 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Save videos from TikTok, Instagram, Facebook, X, Reddit and more straight to your phone. Copy a link, open Grably, done.",
+                "Save videos from TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr straight to your phone. Copy a link, open Grably, done.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.grably.muted,
                 textAlign = TextAlign.Center,

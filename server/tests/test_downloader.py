@@ -264,43 +264,41 @@ def test_more_friendly_errors(message, expected):
     assert expected in d.friendly_error(message)
 
 
-# ---------------------------------------------------------------- more sites
+# ---------------------------------------------------------------- Twitch and Tumblr
 @pytest.mark.parametrize("raw,platform", [
-    ("https://www.reddit.com/r/videos/comments/abc123/funny_cat/", "reddit"),
-    ("https://vimeo.com/76979871", "vimeo"),
-    ("https://www.dailymotion.com/video/x8abcd", "dailymotion"),
-    ("https://dai.ly/x8abcd", "dailymotion"),
-    ("https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAAYYWtidGhudGZpAX1TKn0JAX1TKnXJAAAAAA", "snapchat"),
     ("https://clips.twitch.tv/FunnyClipName", "twitch"),
     ("https://www.twitch.tv/videos/123456789", "twitch"),
-    ("https://www.linkedin.com/posts/someone_video-activity-7012345678901234567-AbCd", "linkedin"),
     ("https://staff.tumblr.com/post/123456789", "tumblr"),
-    ("https://soundcloud.com/artist/track-name", "soundcloud"),
-    ("https://www.bilibili.com/video/BV1xx411c7mD", "bilibili"),
-    ("https://www.bilibili.tv/en/video/2010000000", "bilibili"),
+    ("https://www.tumblr.com/staff/123456789", "tumblr"),
 ])
-def test_accepts_the_newer_sites(raw, platform):
+def test_accepts_twitch_and_tumblr(raw, platform):
     _, p = d.check_url(d.extract_url(raw))
     assert p.key == platform
 
 
+def test_tumblr_short_links_are_followed():
+    assert d._needs_resolving("https://tmblr.co/AbCd")
+
+
 @pytest.mark.parametrize("url", [
-    "https://redd.it/abc123", "https://www.reddit.com/r/videos/s/AbCdEf",
-    "https://b23.tv/AbCdEf", "https://on.soundcloud.com/AbCd", "https://www.snapchat.com/t/AbCd",
+    "https://www.youtube.com/watch?v=1",
+    "https://www.reddit.com/r/videos/comments/abc/x/",
+    "https://vimeo.com/76979871",
+    "https://www.dailymotion.com/video/x8abcd",
+    "https://www.snapchat.com/spotlight/abc",
+    "https://www.linkedin.com/posts/someone-7012345678901234567-AbCd",
+    "https://soundcloud.com/artist/track",
+    "https://www.bilibili.com/video/BV1xx411c7mD",
 ])
-def test_newer_short_links_are_followed(url):
-    assert d._needs_resolving(url)
-
-
-def test_youtube_is_still_refused():
+def test_sites_grably_doesnt_support_are_refused(url):
     with pytest.raises(d.UnsupportedSite) as e:
-        d.check_url("https://www.youtube.com/watch?v=1")
-    assert "SoundCloud" in e.value.message and "YouTube" not in e.value.message
+        d.check_url(url)
+    assert e.value.message.endswith("It works with TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr.")
 
 
 def test_sound_only_posts_offer_mp3():
     info = {"title": "Lo-fi beats", "duration": 120,
             "formats": [{"vcodec": "none", "acodec": "opus", "abr": 64}, {"vcodec": "none", "acodec": "mp3", "abr": 128}]}
-    soundcloud = next(p for p in d.PLATFORMS if p.key == "soundcloud")
-    out = d.summarize(info, soundcloud, "https://soundcloud.com/a/b")
+    tumblr = next(p for p in d.PLATFORMS if p.key == "tumblr")
+    out = d.summarize(info, tumblr, "https://staff.tumblr.com/post/1")
     assert [o["id"] for o in out["options"]] == ["audio"]

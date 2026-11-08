@@ -10,15 +10,8 @@
     { name: 'Facebook', cls: 'facebook', hosts: ['facebook.com', 'fb.com', 'fb.watch'] },
     { name: 'X', cls: 'x', hosts: ['x.com', 'twitter.com', 't.co'] },
     { name: 'Pinterest', cls: 'pinterest', hosts: ['pinterest.com', 'pin.it'], match: /(^|\.)pinterest\.[a-z.]+$/ },
-    { name: 'Reddit', cls: 'reddit', hosts: ['reddit.com', 'redd.it'] },
-    { name: 'Vimeo', cls: 'vimeo', hosts: ['vimeo.com'] },
-    { name: 'Dailymotion', cls: 'dailymotion', hosts: ['dailymotion.com', 'dai.ly'] },
-    { name: 'Snapchat', cls: 'snapchat', hosts: ['snapchat.com'] },
     { name: 'Twitch', cls: 'twitch', hosts: ['twitch.tv'] },
-    { name: 'LinkedIn', cls: 'linkedin', hosts: ['linkedin.com', 'lnkd.in'] },
-    { name: 'Tumblr', cls: 'tumblr', hosts: ['tumblr.com', 'tmblr.co'] },
-    { name: 'SoundCloud', cls: 'soundcloud', hosts: ['soundcloud.com'] },
-    { name: 'Bilibili', cls: 'bilibili', hosts: ['bilibili.com', 'bilibili.tv', 'b23.tv'] }
+    { name: 'Tumblr', cls: 'tumblr', hosts: ['tumblr.com', 'tmblr.co'] }
   ];
   var SUPPORTED = PLATFORMS.slice(0, -1).map(function (p) { return p.name; }).join(', ') + ' and ' + PLATFORMS[PLATFORMS.length - 1].name;
 
@@ -167,7 +160,7 @@
     } else if (outcome.state === 'invalid') {
       setMessage('<span>That doesn\'t look like a link. In the social app, tap <strong>Share → Copy link</strong>, then paste it here.</span>', 'is-error');
     } else if (outcome.state === 'empty') {
-      setMessage('<span>Paste a video link first. Try one from TikTok, Instagram, Reddit or Vimeo.</span>', 'is-error');
+      setMessage('<span>Paste a video link first. Try one from TikTok, Instagram, Facebook or X.</span>', 'is-error');
     } else {
       // Supported link, but the download server isn't reachable
       setMessage(platformIcon(outcome.platform.cls) + '<span><strong>' + outcome.platform.name + ' is supported</strong>, but downloads aren\'t available right now. Please try again later.</span>');
