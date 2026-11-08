@@ -27,6 +27,15 @@ SAMPLES = {
           "https://twitter.com/s2FAKER/status/1621117700482416640"],
     "Pinterest": ["https://www.pinterest.com/pin/664281013778109217/",
                   "https://www.pinterest.com/pin/1084663891475263837/"],
+    "Reddit": ["https://www.reddit.com/r/videos/comments/6rrwyj/that_small_heart_attack/", "https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/"],
+    "Vimeo": ["https://vimeo.com/33951933", "https://vimeo.com/73445910", "https://vimeo.com/7809605"],
+    "Dailymotion": ["https://www.dailymotion.com/video/x2iuewm", "https://www.dailymotion.com/video/x3z49k"],
+    "Snapchat": ["https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAAYYWtidGhudGZpAX1TKn0JAX1TKnXJAAAAAA", "https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAAYcnVjYWdwcGV1AZEaIYn5AZEaIYnrAAAAAQ"],
+    "Twitch": ["https://clips.twitch.tv/FaintLightGullWholeWheat", "https://www.twitch.tv/videos/6528877"],
+    "LinkedIn": ["https://www.linkedin.com/posts/mishalkhawaja_sendinblueviews-toronto-digitalmarketing-ugcPost-6850898786781339649-mM20", "https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7"],
+    "Tumblr": ["https://maskofthedragon.tumblr.com/post/626907179849564160/mona-talking-in-english", "https://bartlebyshop.tumblr.com/post/180294460076/duality-of-bird"],
+    "SoundCloud": ["https://soundcloud.com/the80m/the-following", "https://soundcloud.com/giovannisarani/mezzo-valzer"],
+    "Bilibili": ["https://www.bilibili.com/video/BV13x41117TL", "https://www.bilibili.com/video/BV1bK411W797"],
 }
 
 

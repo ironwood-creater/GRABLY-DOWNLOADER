@@ -1,6 +1,6 @@
 package com.grably.downloader.data
 
-/** The apps Grably downloads from. */
+/** The sites Grably downloads from (the same list as the server's PLATFORMS in server/downloader.py). */
 enum class Platform(
     val key: String,
     val displayName: String,
@@ -12,10 +12,25 @@ enum class Platform(
     Instagram("instagram", "Instagram", listOf("com.instagram.android"), "https://www.instagram.com"),
     Facebook("facebook", "Facebook", listOf("com.facebook.katana"), "https://www.facebook.com"),
     X("x", "X", listOf("com.twitter.android"), "https://x.com"),
-    Pinterest("pinterest", "Pinterest", listOf("com.pinterest"), "https://www.pinterest.com");
+    Pinterest("pinterest", "Pinterest", listOf("com.pinterest"), "https://www.pinterest.com"),
+    Reddit("reddit", "Reddit", listOf("com.reddit.frontpage"), "https://www.reddit.com"),
+    Vimeo("vimeo", "Vimeo", listOf("com.vimeo.android.videoapp"), "https://vimeo.com"),
+    Dailymotion("dailymotion", "Dailymotion", listOf("com.dailymotion.dailymotion"), "https://www.dailymotion.com"),
+    Snapchat("snapchat", "Snapchat", listOf("com.snapchat.android"), "https://www.snapchat.com/spotlight"),
+    Twitch("twitch", "Twitch", listOf("tv.twitch.android.app"), "https://www.twitch.tv"),
+    LinkedIn("linkedin", "LinkedIn", listOf("com.linkedin.android"), "https://www.linkedin.com"),
+    Tumblr("tumblr", "Tumblr", listOf("com.tumblr"), "https://www.tumblr.com"),
+    SoundCloud("soundcloud", "SoundCloud", listOf("com.soundcloud.android"), "https://soundcloud.com"),
+    Bilibili("bilibili", "Bilibili", listOf("tv.danmaku.bili", "com.bstar.intl"), "https://www.bilibili.tv");
 
     companion object {
         fun fromKey(key: String?): Platform? = entries.firstOrNull { it.key == key }
+
+        /** The five most used, shown first and on the welcome screen. */
+        val featured: List<Platform> get() = listOf(TikTok, Instagram, Facebook, X, Pinterest)
+
+        /** "TikTok, Instagram, … and Bilibili" */
+        val allNames: String get() = entries.dropLast(1).joinToString(", ") { it.displayName } + " and " + entries.last().displayName
     }
 }
 
@@ -41,6 +56,15 @@ object LinkDetector {
         Platform.Facebook to listOf("facebook.com", "fb.com", "fb.watch"),
         Platform.X to listOf("x.com", "twitter.com", "t.co"),
         Platform.Pinterest to listOf("pin.it"),
+        Platform.Reddit to listOf("reddit.com", "redd.it"),
+        Platform.Vimeo to listOf("vimeo.com"),
+        Platform.Dailymotion to listOf("dailymotion.com", "dai.ly"),
+        Platform.Snapchat to listOf("snapchat.com"),
+        Platform.Twitch to listOf("twitch.tv"),
+        Platform.LinkedIn to listOf("linkedin.com", "lnkd.in"),
+        Platform.Tumblr to listOf("tumblr.com", "tmblr.co"),
+        Platform.SoundCloud to listOf("soundcloud.com"),
+        Platform.Bilibili to listOf("bilibili.com", "bilibili.tv", "b23.tv"),
     )
 
     private const val MAX_LENGTH = 2048

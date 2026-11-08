@@ -127,7 +127,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             LinkCheck.Empty -> return fail("Paste a video link first.")
             LinkCheck.Invalid -> return fail("That doesn't look like a link. Copy the video's link and paste it here.")
             is LinkCheck.Unsupported -> return fail(
-                "Grably doesn't support ${check.host} yet. Try a TikTok, Instagram, Facebook, X or Pinterest link.",
+                "Grably doesn't support ${check.host} yet. It works with ${Platform.allNames}.",
             )
             is LinkCheck.Supported -> check.url
         }

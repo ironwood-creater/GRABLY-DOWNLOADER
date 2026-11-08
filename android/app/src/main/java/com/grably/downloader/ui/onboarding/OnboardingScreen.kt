@@ -93,14 +93,27 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Save videos from TikTok, Instagram, Facebook, X and Pinterest straight to your phone. Copy a link, open Grably, done.",
+                "Save videos from TikTok, Instagram, Facebook, X, Reddit and more straight to your phone. Copy a link, open Grably, done.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.grably.muted,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Platform.entries.forEach { PlatformBadge(it, size = 30.dp) }
+                Platform.featured.forEach { PlatformBadge(it, size = 30.dp) }
+                Box(
+                    Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "+${Platform.entries.size - Platform.featured.size}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             FilledIconButton(

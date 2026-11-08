@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -151,7 +153,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Paste a link from TikTok, Instagram, Facebook, X or Pinterest.",
+                "Paste a link from TikTok, Instagram, Facebook, X, Reddit and more.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.grably.muted,
             )
@@ -376,15 +378,16 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PlatformRow(onOpen: (Platform) -> Unit) {
-    Row(Modifier.fillMaxWidth()) {
-        Platform.entries.forEach { platform ->
-            // Equal shares of the width, so all five fit on small phones too
+    // All supported sites; swipe sideways for more. Starts with the five most used.
+    val ordered = remember { Platform.featured + Platform.entries.filterNot { it in Platform.featured } }
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        items(ordered, key = { it.key }) { platform ->
             Column(
                 Modifier
-                    .weight(1f)
+                    .width(68.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .clickable(role = Role.Button, onClickLabel = "Open ${platform.displayName}") { onOpen(platform) }
-                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                    .padding(horizontal = 2.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 PlatformBadge(platform, size = 48.dp, contentDescription = null)

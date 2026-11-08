@@ -18,6 +18,16 @@
         <package android:name="com.facebook.katana" />
         <package android:name="com.twitter.android" />
         <package android:name="com.pinterest" />
+        <package android:name="com.reddit.frontpage" />
+        <package android:name="com.vimeo.android.videoapp" />
+        <package android:name="com.dailymotion.dailymotion" />
+        <package android:name="com.snapchat.android" />
+        <package android:name="tv.twitch.android.app" />
+        <package android:name="com.linkedin.android" />
+        <package android:name="com.tumblr" />
+        <package android:name="com.soundcloud.android" />
+        <package android:name="tv.danmaku.bili" />
+        <package android:name="com.bstar.intl" />
     </queries>
 
     <application
@@ -39,7 +49,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- "Share → Grably" from TikTok, Instagram, Facebook, X and Pinterest -->
+            <!-- "Share → Grably" from TikTok, Instagram, Reddit and the other supported apps -->
             <intent-filter android:label="@string/share_label">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
