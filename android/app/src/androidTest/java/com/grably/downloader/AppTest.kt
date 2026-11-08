@@ -5,6 +5,8 @@ import android.os.Build
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -49,7 +51,13 @@ class AppTest {
         if (compose.onAllNodes(hasText("All Videos Download")).fetchSemanticsNodes().isNotEmpty()) {
             compose.onNodeWithContentDescription("Get started").performClick()
         }
-        compose.waitUntilExactlyOneExists(hasText("Download any video"), 10_000)
+        try {
+            compose.waitUntilExactlyOneExists(hasText("Download any video"), 10_000)
+        } catch (e: Throwable) {
+            // Say what is on screen instead, so a failure can be understood from the log alone
+            val screen = compose.onAllNodes(isRoot()).printToString(maxDepth = 12)
+            throw AssertionError("The home screen didn't appear. On screen:\n$screen", e)
+        }
     }
 
     private fun typeLink(text: String) {

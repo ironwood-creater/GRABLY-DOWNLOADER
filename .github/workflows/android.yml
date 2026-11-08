@@ -170,7 +170,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           working-directory: android
           # On failure: the app's crash lines, then each failed test's message (last, so it's easy to find)
-          script: ./gradlew connectedDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER" -Pandroid.testInstrumentationRunnerArguments.notClass=com.grably.downloader.ScreenshotTest || (adb logcat -d -t 150 AndroidRuntime:E '*:S' ; find app/build/outputs/androidTest-results -name '*.xml' -exec grep -h -B1 -A12 '<failure' {} + | head -60 ; exit 1)
+          script: ./gradlew connectedDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER" -Pandroid.testInstrumentationRunnerArguments.notClass=com.grably.downloader.ScreenshotTest || (adb logcat -d -t 150 AndroidRuntime:E '*:S' ; find app/build/outputs/androidTest-results -name '*.xml' -exec grep -h -B1 -A90 '<failure' {} + | head -200 ; exit 1)
 
       - name: Stand-in server log
         if: always()
