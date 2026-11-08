@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -52,17 +53,19 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
+        // The picture takes whatever height is left, so the text and button below always fit
         Box(
             Modifier
                 .fillMaxWidth()
-                .weight(1.15f),
+                .weight(1f),
         ) {
             CurvedHeader(Modifier.fillMaxSize())
             Box(
                 Modifier
                     .fillMaxSize()
                     .statusBarsPadding()
-                    .padding(bottom = 64.dp),
+                    .padding(bottom = 64.dp)
+                    .clipToBounds(),
                 contentAlignment = Alignment.Center,
             ) {
                 CardStack()
@@ -79,7 +82,6 @@ fun OnboardingScreen(onContinue: () -> Unit) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .weight(1f)
                 .navigationBarsPadding()
                 .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -93,7 +95,7 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Save videos from TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr straight to your phone. Copy a link, open Grably, done.",
+                "Save videos from TikTok, Instagram, Twitch and more straight to your phone. Copy a link, open Grably, done.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.grably.muted,
                 textAlign = TextAlign.Center,
@@ -115,7 +117,7 @@ fun OnboardingScreen(onContinue: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(28.dp))
             FilledIconButton(
                 onClick = onContinue,
                 modifier = Modifier
