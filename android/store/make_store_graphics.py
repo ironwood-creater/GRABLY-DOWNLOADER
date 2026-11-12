@@ -5,7 +5,7 @@
 
 Reads   store/screenshots/raw/*.png   (1080 x 1920, taken by ScreenshotTest on an emulator)
         store/graphics/icon-512.png
-Writes  store/screenshots/phone/*.png (1080 x 1920, framed, with a caption)
+Writes  store/screenshots/phone/*.png (1080 x 1920, framed, with a caption; Play shows up to 8)
         store/screenshots/raw/*.png   (flattened to RGB, so they can be uploaded as they are too)
         store/graphics/feature-graphic.png (1024 x 500, no transparency)
 """
@@ -32,10 +32,14 @@ CAPTIONS = {
     "02-home": "Paste a link. That's it.",
     "03-link-found": "Links are recognised instantly",
     "04-quality": "Pick the quality you want",
-    "05-downloads": "All your downloads in one place",
-    "06-home-dark": "Easy on the eyes in dark mode",
-    "07-quality-dark": "Or save just the sound as MP3",
-    "08-downloads-dark": "Watch, share or delete anytime",
+    "05-album": "Save photos and whole albums",
+    "06-downloads": "All your downloads in one place",
+    "07-player": "Watch and view right in the app",
+    "08-batch": "Paste many links at once",
+    "09-settings": "Set your quality once",
+    "10-home-dark": "Easy on the eyes in dark mode",
+    "11-quality-dark": "Or save just the sound as MP3",
+    "12-private-dark": "Hide videos in a private folder",
 }
 
 
@@ -174,8 +178,8 @@ def main() -> None:
         framed_screenshot(raw, caption).save(PHONE / f"{name}.png", optimize=True)
         made += 1
     print(f"{made} framed screenshots in {PHONE.relative_to(STORE)}")
-    if (RAW / "02-home.png").is_file() and (RAW / "05-downloads.png").is_file():
-        feature_graphic(RAW / "02-home.png", RAW / "05-downloads.png").save(GRAPHICS / "feature-graphic.png", optimize=True)
+    if (RAW / "02-home.png").is_file() and (RAW / "06-downloads.png").is_file():
+        feature_graphic(RAW / "02-home.png", RAW / "06-downloads.png").save(GRAPHICS / "feature-graphic.png", optimize=True)
         print("feature graphic in graphics/feature-graphic.png")
 
 

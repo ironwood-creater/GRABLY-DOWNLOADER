@@ -5,11 +5,12 @@ Everything Play Console asks for, ready to paste. Graphics are in this folder:
 | What Play Console asks for | File | Size |
 |---|---|---|
 | App icon | `graphics/icon-512.png` | 512 × 512 PNG |
+| Promo video (upload to YouTube, paste the link) | `promo/grabbly-promo.mp4` | 1920 × 1080, 15 s |
 | Feature graphic | `graphics/feature-graphic.png` | 1024 × 500 PNG, no transparency |
-| Phone screenshots (8) | `screenshots/phone/01-…08-….png` | 1080 × 1920 PNG |
+| Phone screenshots (12 to choose from) | `screenshots/phone/01-…12-….png` | 1080 × 1920 PNG |
 | Plain screenshots, if you prefer them without captions | `screenshots/raw/` | 1080 × 1920 PNG |
 
-Play allows 2 to 8 phone screenshots, so all 8 fit.
+Play shows 2 to 8 phone screenshots. There are 12 here; the 8 marked ★ below are the recommended set, in this order.
 
 ## Main store listing
 
@@ -59,16 +60,20 @@ Only download videos you own or have permission to save, and respect the rights 
 Grabbly is an independent app and isn't affiliated with, endorsed by or sponsored by any of the sites it works with. All trademarks belong to their owners.
 ```
 
-**Screenshot captions** (already on the framed screenshots)
+**Screenshot captions** (already on the framed screenshots; ★ = recommended 8)
 
-1. Save videos from your favorite apps
-2. Paste a link. That's it.
-3. Links are recognised instantly
-4. Pick the quality you want
-5. All your downloads in one place
-6. Easy on the eyes in dark mode
-7. Or save just the sound as MP3
-8. Watch, share or delete anytime
+1. ★ Save videos from your favorite apps (01-welcome)
+2. ★ Paste a link. That's it. (02-home)
+3. Links are recognised instantly (03-link-found)
+4. ★ Pick the quality you want (04-quality)
+5. ★ Save photos and whole albums (05-album)
+6. ★ All your downloads in one place (06-downloads)
+7. ★ Watch and view right in the app (07-player)
+8. ★ Paste many links at once (08-batch)
+9. Set your quality once (09-settings)
+10. Easy on the eyes in dark mode (10-home-dark)
+11. Or save just the sound as MP3 (11-quality-dark)
+12. ★ Hide videos in a private folder (12-private-dark)
 
 ## Store settings
 

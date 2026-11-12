@@ -1,16 +1,21 @@
 package com.grabbly.downloader
 
 import android.Manifest
+import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performScrollToNode
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
@@ -19,6 +24,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.grabbly.downloader.data.Platform
 import com.grabbly.downloader.data.db.DownloadEntity
 import com.grabbly.downloader.data.db.DownloadStatus
+import com.grabbly.downloader.util.QualityPreference
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -26,6 +32,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import java.net.URL
 
 /**
  * Takes the Google Play screenshots from the real app: a clean status bar, sample downloads,
@@ -55,8 +63,38 @@ class ScreenshotTest {
             instrumentation.uiAutomation.grantRuntimePermission(app.packageName, Manifest.permission.POST_NOTIFICATIONS)
         }
         container.database.clearAllTables()
-        runBlocking { sampleDownloads().forEach { container.database.downloadDao().insert(it) } }
+        container.settings.setQuality(QualityPreference.Ask)
+        val photo = File(app.filesDir, "sample-photo.jpg")
+        URL("${BuildConfig.API_BASE_URL}/thumbs/sunset.jpg").openStream().use { input -> photo.outputStream().use { input.copyTo(it) } }
+        runBlocking {
+            (sampleDownloads() + samplePhoto(photo)).sortedBy { it.createdAt }.forEach { container.database.downloadDao().insert(it) }
+        }
         container.settings.onboardingDone = false
+    }
+
+    private fun samplePhoto(file: File): DownloadEntity {
+        val now = System.currentTimeMillis()
+        return DownloadEntity(
+            sourceUrl = "https://www.instagram.com/p/Csunset/",
+            platform = Platform.Instagram.key,
+            title = PHOTO_TITLE,
+            uploader = null,
+            thumbnailUrl = "${BuildConfig.API_BASE_URL}/thumbs/sunset.jpg",
+            durationSeconds = null,
+            optionId = "photo",
+            optionLabel = "JPG · 1080 × 1350",
+            isAudio = false,
+            status = DownloadStatus.COMPLETE,
+            bytesDownloaded = file.length(),
+            totalBytes = file.length(),
+            fileName = "$PHOTO_TITLE.jpg",
+            contentUri = Uri.fromFile(file).toString(),
+            mimeType = "image/jpeg",
+            createdAt = now - 2 * 24 * 60 * 60_000L,
+            completedAt = now - 2 * 24 * 60 * 60_000L + 60_000L,
+            isPhoto = true,
+            caption = "Sunset over the bay #sunset #travel",
+        )
     }
 
     @After
@@ -64,11 +102,22 @@ class ScreenshotTest {
         shell("cmd uimode night no")
         shell("am broadcast -a com.android.systemui.demo -e command exit")
         container.database.clearAllTables()
+        File(app.filesDir, "sample-photo.jpg").delete()
     }
 
     @Test
     fun storeScreenshots() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            fun hideKeyboard() = scenario.onActivity {
+                WindowCompat.getInsetsController(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime())
+            }
+
+            fun closeSheet(text: String) {
+                shell("input keyevent 4") // back: close the sheet
+                compose.waitUntil(5_000) { compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty() }
+                compose.onNodeWithContentDescription("Clear").performClick()
+            }
+
             // 1. Welcome
             compose.waitUntilExactlyOneExists(hasText("All Videos Download"), 15_000)
             capture("01-welcome")
@@ -80,24 +129,43 @@ class ScreenshotTest {
 
             // 3. A pasted TikTok link is recognised
             compose.onNode(hasSetTextAction()).performTextInput("https://www.tiktok.com/@ava.travels/video/7301234567890")
-            scenario.onActivity {
-                WindowCompat.getInsetsController(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime())
-            }
+            hideKeyboard()
             compose.waitUntilExactlyOneExists(hasText("TikTok link found", substring = true), 5_000)
             capture("03-link-found")
 
-            // 4. Quality picker
+            // 4. Quality picker, with Copy caption
             compose.onNodeWithContentDescription("Find video").performClick()
             compose.waitUntilExactlyOneExists(hasText("Choose a quality"), 15_000)
             capture("04-quality")
-            shell("input keyevent 4") // back: close the sheet
-            compose.waitUntil(5_000) { compose.onAllNodes(hasText("Choose a quality")).fetchSemanticsNodes().isEmpty() }
-            compose.onNodeWithContentDescription("Clear").performClick()
+            closeSheet("Choose a quality")
 
-            // 5. Downloads
+            // 5. An album with a video and two photos
+            compose.onNode(hasSetTextAction()).performTextInput("https://www.instagram.com/p/Ccarousel/")
+            hideKeyboard()
+            compose.onNodeWithContentDescription("Find video").performClick()
+            compose.waitUntilExactlyOneExists(hasText("This post has 2 photos and 1 video."), 15_000)
+            capture("05-album")
+            closeSheet("This post has 2 photos and 1 video.")
+
+            // 9. Settings
+            compose.onNodeWithContentDescription("Settings").performClick()
+            compose.waitUntilExactlyOneExists(hasText("Video quality"), 10_000)
+            capture("09-settings")
+            compose.onNodeWithContentDescription("Back").performClick()
+            compose.waitUntilExactlyOneExists(hasText("Download any video"), 10_000)
+
+            // 6. Downloads
             compose.onNodeWithContentDescription("Downloads").performClick()
             compose.waitUntilExactlyOneExists(hasText("Street food tour: 10 dishes under \$5"), 10_000)
-            capture("05-downloads")
+            capture("06-downloads")
+
+            // 7. A saved photo in Grabbly's viewer
+            compose.onNode(hasScrollAction()).performScrollToNode(hasText(PHOTO_TITLE))
+            compose.onNodeWithText(PHOTO_TITLE).performClick()
+            compose.waitUntilExactlyOneExists(hasContentDescription("Photo"), 10_000)
+            capture("07-player")
+            compose.onNodeWithContentDescription("Back").performClick()
+            compose.waitUntilExactlyOneExists(hasText("Complete"), 10_000)
 
             // Dark mode
             shell("cmd uimode night yes")
@@ -107,16 +175,39 @@ class ScreenshotTest {
             compose.waitUntil(5_000) {
                 compose.onAllNodes(hasText("Street food tour: 10 dishes under \$5")).fetchSemanticsNodes().isEmpty()
             }
-            capture("08-downloads-dark")
+            // 12. The menu of a saved video, with "Move to private folder"
+            compose.onNode(hasContentDescription("More options") and hasAnyAncestor(hasText("City lights timelapse"))).performClick()
+            compose.waitUntilExactlyOneExists(hasText("Move to private folder"), 5_000)
+            capture("12-private-dark")
+            shell("input keyevent 4") // close the menu
+            compose.waitUntil(5_000) { compose.onAllNodes(hasText("Move to private folder")).fetchSemanticsNodes().isEmpty() }
 
             compose.onNodeWithContentDescription("Back").performClick()
             compose.waitUntilExactlyOneExists(hasText("Download any video"), 10_000)
-            capture("06-home-dark")
+            capture("10-home-dark")
 
             compose.onNode(hasSetTextAction()).performTextInput("https://www.instagram.com/reel/Cstreetfood/")
+            hideKeyboard()
             compose.onNodeWithContentDescription("Find video").performClick()
             compose.waitUntilExactlyOneExists(hasText("Choose a quality"), 15_000)
-            capture("07-quality-dark")
+            capture("11-quality-dark")
+            closeSheet("Choose a quality")
+
+            // 8. Several links at once (last: it starts real downloads, which would show up in the shots above)
+            shell("cmd uimode night no")
+            Thread.sleep(2_500)
+            compose.waitUntilExactlyOneExists(hasText("Paste several links"), 15_000)
+            compose.onNodeWithText("Paste several links").performClick()
+            compose.waitUntilExactlyOneExists(hasText("Paste links here"), 10_000)
+            compose.onNode(hasSetTextAction()).performTextInput(
+                "https://www.tiktok.com/@ava.travels/video/7301234567890\n" +
+                    "https://www.instagram.com/p/Ccarousel/\n" +
+                    "https://www.instagram.com/reel/Cstreetfood/",
+            )
+            hideKeyboard()
+            compose.onNodeWithText("Download all (3)").performClick()
+            compose.waitUntilExactlyOneExists(hasText("Done: 3 added."), 30_000)
+            capture("08-batch")
         }
     }
 
@@ -199,5 +290,6 @@ class ScreenshotTest {
 
     private companion object {
         const val DIR = "/data/local/tmp/grabbly-shots"
+        const val PHOTO_TITLE = "Sunset over the bay"
     }
 }
