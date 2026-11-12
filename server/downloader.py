@@ -25,7 +25,7 @@ import httpx
 import yt_dlp
 from yt_dlp.utils import DownloadError
 
-log = logging.getLogger("grably.downloader")
+log = logging.getLogger("grabbly.downloader")
 
 
 # --------------------------------------------------------------------------
@@ -36,18 +36,18 @@ class Settings:
     max_duration: int = 3 * 60 * 60          # seconds
     max_bytes: int = 500 * 1024 * 1024       # largest file we'll serve
     allow_audio: bool = True                 # offer an "MP3 · Audio only" option
-    tmp_root: Path = Path(tempfile.gettempdir()) / "grably"
+    tmp_root: Path = Path(tempfile.gettempdir()) / "grabbly"
     socket_timeout: int = 20
 
     @classmethod
     def from_env(cls) -> "Settings":
         s = cls()
-        s.max_duration = int(os.environ.get("GRABLY_MAX_DURATION", s.max_duration))
+        s.max_duration = int(os.environ.get("GRABBLY_MAX_DURATION", s.max_duration))
         # Vercel Functions have about 500 MB of temporary disk, and merging needs room for both parts
         default_mb = 200 if os.environ.get("VERCEL") == "1" else 500
-        s.max_bytes = int(os.environ.get("GRABLY_MAX_MB", default_mb)) * 1024 * 1024
-        s.allow_audio = os.environ.get("GRABLY_AUDIO", "1").lower() in ("1", "true", "yes")
-        s.tmp_root = Path(os.environ.get("GRABLY_TMP", s.tmp_root))
+        s.max_bytes = int(os.environ.get("GRABBLY_MAX_MB", default_mb)) * 1024 * 1024
+        s.allow_audio = os.environ.get("GRABBLY_AUDIO", "1").lower() in ("1", "true", "yes")
+        s.tmp_root = Path(os.environ.get("GRABBLY_TMP", s.tmp_root))
         return s
 
 
@@ -70,7 +70,7 @@ def find_ffmpeg() -> Optional[str]:
         return None
     if not os.access(exe, os.X_OK):
         # Some hosts unpack the bundle without the executable bit: use a copy in /tmp
-        copy = Path(tempfile.gettempdir()) / "grably-ffmpeg"
+        copy = Path(tempfile.gettempdir()) / "grabbly-ffmpeg"
         if not copy.exists():
             shutil.copyfile(exe, copy)
         copy.chmod(0o755)
@@ -82,7 +82,7 @@ FFMPEG = find_ffmpeg()
 if FFMPEG is None:
     log.warning("ffmpeg not found: only single-file formats are offered and MP3 downloads are off")
 
-USER_AGENT = "Mozilla/5.0 (compatible; GrablyBot/1.0)"
+USER_AGENT = "Mozilla/5.0 (compatible; GrabblyBot/1.0)"
 MAX_REDIRECTS = 5
 OPTION_RE = re.compile(r"best|audio|v\d{3,4}")
 
@@ -90,7 +90,7 @@ OPTION_RE = re.compile(r"best|audio|v\d{3,4}")
 # --------------------------------------------------------------------------
 # Errors shown to the user
 # --------------------------------------------------------------------------
-class GrablyError(Exception):
+class GrabblyError(Exception):
     status = 400
 
     def __init__(self, message: str, status: Optional[int] = None):
@@ -100,19 +100,19 @@ class GrablyError(Exception):
             self.status = status
 
 
-class InvalidLink(GrablyError):
+class InvalidLink(GrabblyError):
     status = 400
 
 
-class UnsupportedSite(GrablyError):
+class UnsupportedSite(GrabblyError):
     status = 400
 
 
-class VideoUnavailable(GrablyError):
+class VideoUnavailable(GrabblyError):
     status = 422
 
 
-class TooLarge(GrablyError):
+class TooLarge(GrabblyError):
     status = 413
 
 

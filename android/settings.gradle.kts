@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Grably"
+rootProject.name = "Grabbly"
 include(":app")

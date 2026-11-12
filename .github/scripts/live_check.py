@@ -1,6 +1,6 @@
 """Checks a live Grabbly site: pages, the API, and real lookups and downloads on each platform.
 
-    python .github/scripts/live_check.py https://grably-downloader-server.vercel.app
+    python .github/scripts/live_check.py https://grabbly-downloader-server.vercel.app
 
 Prints one line per check and never downloads more than it needs to report on.
 """
@@ -11,7 +11,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://grably-downloader-server.vercel.app").rstrip("/")
+BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://grabbly-downloader-server.vercel.app").rstrip("/")
 UA = {"User-Agent": "Grabbly-live-check/1.0"}
 
 # Public videos that yt-dlp itself uses in its tests

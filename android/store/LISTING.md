@@ -36,7 +36,7 @@ HOW IT WORKS
 • Choose MP4 in up to 1080p, or save just the sound as MP3
 • Find everything in Downloads, or in your phone's Gallery
 
-WHY GRABLY
+WHY GRABBLY
 • Free, with no account and no sign-up
 • Downloads keep going in the background, with a progress notification
 • Saved straight to Movies/Grabbly (videos) and Music/Grabbly (sound)
@@ -68,8 +68,8 @@ Grabbly is an independent app and isn't affiliated with, endorsed by or sponsore
 
 - **App category:** Video Players & Editors (or Tools)
 - **Contact email:** your support email (required)
-- **Website:** https://grably-downloader-server.vercel.app
-- **Privacy policy:** https://grably-downloader-server.vercel.app/privacy
+- **Website:** https://grabbly-downloader-server.vercel.app
+- **Privacy policy:** https://grabbly-downloader-server.vercel.app/privacy
 
 ## App content (Policy section in Play Console)
 

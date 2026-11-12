@@ -6,11 +6,11 @@
   <title>Grabbly: Free Video Downloader for TikTok, Instagram, Facebook, X &amp; More</title>
   <meta name="description" content="Free video downloader for TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr. Works on any laptop, PC or Mac: paste a link, pick a quality, and it's saved. No sign-up, no subscription.">
   <!-- Where the download API lives. Leave empty when this page is served by the Grabbly server (server/app.py). -->
-  <meta name="grably-api" content="">
+  <meta name="grabbly-api" content="">
   <!-- Google AdSense: publisher ID (ca-pub-...) and display ad unit ID. Empty = no ads.
-       When the page is served by server/app.py these are filled from GRABLY_ADSENSE_CLIENT / GRABLY_ADSENSE_SLOT. -->
-  <meta name="grably-ads-client" content="">
-  <meta name="grably-ads-slot" content="">
+       When the page is served by server/app.py these are filled from GRABBLY_ADSENSE_CLIENT / GRABBLY_ADSENSE_SLOT. -->
+  <meta name="grabbly-ads-client" content="">
+  <meta name="grabbly-ads-slot" content="">
   <meta name="theme-color" content="#0B1A33">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 
@@ -29,8 +29,8 @@
     // Hide scroll-reveal content until main.js shows it. If main.js never runs, show everything after 4s.
     document.documentElement.classList.add('js');
     // Reserve room for ads before the first paint, so nothing jumps when they load
-    if (document.querySelector('meta[name="grably-ads-client"]').content) document.documentElement.classList.add('has-ads');
-    setTimeout(function () { if (!window.__grably) document.documentElement.classList.remove('js'); }, 4000);
+    if (document.querySelector('meta[name="grabbly-ads-client"]').content) document.documentElement.classList.add('has-ads');
+    setTimeout(function () { if (!window.__grabbly) document.documentElement.classList.remove('js'); }, 4000);
   </script>
 </head>
 <body>

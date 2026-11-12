@@ -62,17 +62,17 @@ def test_static_build_fills_in_adsense_and_is_safe_to_run_twice(tmp_path):
     twice = (public / "index.html").read_text()
     assert once == twice
     assert once.count("?v=") == 2
-    assert '<meta name="grably-ads-client" content="ca-pub-1234567890123456">' in once
+    assert '<meta name="grabbly-ads-client" content="ca-pub-1234567890123456">' in once
     assert '<meta name="google-adsense-account" content="ca-pub-1234567890123456">' in once
-    assert '<meta name="grably-ads-slot" content="9876543210">' in once
+    assert '<meta name="grabbly-ads-slot" content="9876543210">' in once
     assert (public / "ads.txt").read_text() == "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"
 
 
 def test_ads_need_both_valid_ids():
     assert site.ads_from_env({}) is None
-    assert site.ads_from_env({"GRABLY_ADSENSE_CLIENT": "ca-pub-1234567890123456"}) is None
-    assert site.ads_from_env({"GRABLY_ADSENSE_CLIENT": "pub-123", "GRABLY_ADSENSE_SLOT": "9876543210"}) is None
-    assert site.ads_from_env({"GRABLY_ADSENSE_CLIENT": " ca-pub-1234567890123456 ", "GRABLY_ADSENSE_SLOT": "9876543210"}) == \
+    assert site.ads_from_env({"GRABBLY_ADSENSE_CLIENT": "ca-pub-1234567890123456"}) is None
+    assert site.ads_from_env({"GRABBLY_ADSENSE_CLIENT": "pub-123", "GRABBLY_ADSENSE_SLOT": "9876543210"}) is None
+    assert site.ads_from_env({"GRABBLY_ADSENSE_CLIENT": " ca-pub-1234567890123456 ", "GRABBLY_ADSENSE_SLOT": "9876543210"}) == \
         site.Ads("ca-pub-1234567890123456", "9876543210")
 
 
@@ -100,7 +100,7 @@ def test_without_ffmpeg_only_single_file_formats_are_used(monkeypatch):
 def _server_settings(env: dict) -> dict:
     code = ("import json; from server import app as a, downloader as d; "
             "print(json.dumps({'trust': a.TRUST_PROXY, 'mb': d.settings.max_bytes // 1048576}))")
-    clean = {k: v for k, v in os.environ.items() if not k.startswith(("VERCEL", "GRABLY_"))}
+    clean = {k: v for k, v in os.environ.items() if not k.startswith(("VERCEL", "GRABBLY_"))}
     out = subprocess.run([sys.executable, "-c", code], cwd=ROOT, env={**clean, **env},
                          capture_output=True, text=True, check=True)
     return json.loads(out.stdout.strip().splitlines()[-1])
@@ -108,5 +108,5 @@ def _server_settings(env: dict) -> dict:
 
 def test_vercel_defaults():
     assert _server_settings({}) == {"trust": False, "mb": 500}
-    assert _server_settings({"VERCEL": "1", "GRABLY_SECRET": "x"}) == {"trust": True, "mb": 200}
-    assert _server_settings({"VERCEL": "1", "GRABLY_SECRET": "x", "GRABLY_TRUST_PROXY": "0"})["trust"] is False
+    assert _server_settings({"VERCEL": "1", "GRABBLY_SECRET": "x"}) == {"trust": True, "mb": 200}
+    assert _server_settings({"VERCEL": "1", "GRABBLY_SECRET": "x", "GRABBLY_TRUST_PROXY": "0"})["trust"] is False

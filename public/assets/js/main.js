@@ -1,7 +1,7 @@
 /* Grabbly: website behavior and the web downloader */
 (function () {
   'use strict';
-  window.__grably = true; // tells the fallback in index.html that this script loaded
+  window.__grabbly = true; // tells the fallback in index.html that this script loaded
 
   /* Platforms Grabbly supports, matched by hostname. */
   var PLATFORMS = [
@@ -81,7 +81,7 @@
   var submitBtn = form && form.querySelector('.checker__submit');
   var label = form && form.querySelector('.checker__label');
 
-  var apiMeta = document.querySelector('meta[name="grably-api"]');
+  var apiMeta = document.querySelector('meta[name="grabbly-api"]');
   var API = ((apiMeta && apiMeta.content) || '').trim().replace(/\/+$/, '');
 
   function ApiError(message) { this.message = message; }
@@ -313,7 +313,7 @@
         if (!res.ok) return readError(res).then(function (msg) { throw new ApiError(msg); });
         var total = Number(res.headers.get('Content-Length')) || 0;
         var type = res.headers.get('Content-Type') || 'application/octet-stream';
-        var name = filenameFrom(res.headers.get('Content-Disposition')) || 'grably-video.mp4';
+        var name = filenameFrom(res.headers.get('Content-Disposition')) || 'grabbly-video.mp4';
         bar.classList.remove('is-indeterminate');
         if (!res.body || !res.body.getReader) {
           return res.blob().then(function (blob) { return { blob: blob, name: name }; });
@@ -492,7 +492,7 @@
 
   /* ---------- Google AdSense ----------
    * Ads appear only when a publisher ID and ad unit ID are set (meta tags in index.html, filled in by
-   * the server from GRABLY_ADSENSE_CLIENT / GRABLY_ADSENSE_SLOT). Google's script loads after the page
+   * the server from GRABBLY_ADSENSE_CLIENT / GRABBLY_ADSENSE_SLOT). Google's script loads after the page
    * has finished loading, and each ad is requested only when it's about to scroll into view, so ads
    * never slow down the first paint or scrolling.
    */
@@ -500,8 +500,8 @@
     var m = document.querySelector('meta[name="' + name + '"]');
     return m ? m.content.trim() : '';
   };
-  var adClient = metaContent('grably-ads-client');
-  var adUnit = metaContent('grably-ads-slot');
+  var adClient = metaContent('grabbly-ads-client');
+  var adUnit = metaContent('grabbly-ads-slot');
   var adSpaces = [].slice.call(document.querySelectorAll('[data-ad]'));
   var hideAds = function () {
     document.documentElement.classList.remove('has-ads');

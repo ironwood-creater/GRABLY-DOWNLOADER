@@ -5,32 +5,32 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// Download server address. The live Grabbly site on Vercel unless -Pgrably.apiBaseUrl=... says otherwise
+// Download server address. The live Grabbly site on Vercel unless -Pgrabbly.apiBaseUrl=... says otherwise
 // (CI passes the stand-in server for the device test).
-val defaultApiBaseUrl = "https://grably-downloader-server.vercel.app"
-val apiBaseUrl: String = (findProperty("grably.apiBaseUrl") as String?).orEmpty().trim().trimEnd('/')
+val defaultApiBaseUrl = "https://grabbly-downloader-server.vercel.app"
+val apiBaseUrl: String = (findProperty("grabbly.apiBaseUrl") as String?).orEmpty().trim().trimEnd('/')
     .ifEmpty { defaultApiBaseUrl }
 
 // Google Play needs a higher versionCode for every upload: CI passes the run number.
-val appVersionCode = (findProperty("grably.versionCode") as String?)?.toIntOrNull() ?: 1
-val appVersionName = (findProperty("grably.versionName") as String?)?.ifBlank { null } ?: "1.2.0"
+val appVersionCode = (findProperty("grabbly.versionCode") as String?)?.toIntOrNull() ?: 1
+val appVersionName = (findProperty("grabbly.versionName") as String?)?.ifBlank { null } ?: "1.2.0"
 
 // Upload key for Google Play, from environment variables (GitHub secrets in CI) or gradle properties.
 // Without it, release builds are unsigned and have to be signed before uploading.
 fun secret(name: String): String? =
     (System.getenv(name) ?: findProperty(name.lowercase().replace('_', '.')) as String?)?.ifBlank { null }
-val keystorePath = secret("GRABLY_KEYSTORE_FILE")
-val keystorePassword = secret("GRABLY_KEYSTORE_PASSWORD")
-val keyAliasName = secret("GRABLY_KEY_ALIAS")
-val keyPasswordValue = secret("GRABLY_KEY_PASSWORD") ?: keystorePassword
+val keystorePath = secret("GRABBLY_KEYSTORE_FILE")
+val keystorePassword = secret("GRABBLY_KEYSTORE_PASSWORD")
+val keyAliasName = secret("GRABBLY_KEY_ALIAS")
+val keyPasswordValue = secret("GRABBLY_KEY_PASSWORD") ?: keystorePassword
 val canSignRelease = keystorePath != null && keystorePassword != null && keyAliasName != null && file(keystorePath).isFile
 
 android {
-    namespace = "com.grably.downloader"
+    namespace = "com.grabbly.downloader"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.grably.downloader"
+        applicationId = "com.grabbly.downloader"
         minSdk = 29
         targetSdk = 36
         versionCode = appVersionCode

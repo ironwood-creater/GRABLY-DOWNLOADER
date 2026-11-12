@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.Grably" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Grabbly" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

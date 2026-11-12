@@ -28,7 +28,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Build the bundle
-        run: ./gradlew bundleRelease -Pgrably.versionCode=21 -Pgrably.versionName=1.2.0
+        run: ./gradlew bundleRelease -Pgrabbly.versionCode=21 -Pgrabbly.versionName=1.2.0
 
       - name: Commit the bundle
         run: |

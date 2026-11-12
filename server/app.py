@@ -35,20 +35,20 @@ from starlette.middleware.gzip import DEFAULT_EXCLUDED_CONTENT_TYPES, GZipMiddle
 
 from . import downloader, site
 
-log = logging.getLogger("grably")
-logging.basicConfig(level=os.environ.get("GRABLY_LOG_LEVEL", "INFO"))
+log = logging.getLogger("grabbly")
+logging.basicConfig(level=os.environ.get("GRABBLY_LOG_LEVEL", "INFO"))
 
 PUBLIC = site.PUBLIC  # everything the website serves (pages, CSS, JS, fonts, images)
 ON_VERCEL = os.environ.get("VERCEL") == "1"
-SECRET = (os.environ.get("GRABLY_SECRET") or "").encode()
+SECRET = (os.environ.get("GRABBLY_SECRET") or "").encode()
 if not SECRET:
     if ON_VERCEL:
         # Each Vercel instance would pick its own random key and thumbnails would break
-        log.warning("GRABLY_SECRET isn't set; thumbnails may not load. Set it in the project's environment variables")
+        log.warning("GRABBLY_SECRET isn't set; thumbnails may not load. Set it in the project's environment variables")
     SECRET = secrets.token_hex(32).encode()
 # Behind a proxy that sets X-Forwarded-For (Vercel always does, and its value can't be faked)
-TRUST_PROXY = os.environ.get("GRABLY_TRUST_PROXY", "1" if ON_VERCEL else "0").lower() in ("1", "true", "yes")
-PROXY_HOPS = max(1, int(os.environ.get("GRABLY_PROXY_HOPS", 1)))
+TRUST_PROXY = os.environ.get("GRABBLY_TRUST_PROXY", "1" if ON_VERCEL else "0").lower() in ("1", "true", "yes")
+PROXY_HOPS = max(1, int(os.environ.get("GRABBLY_PROXY_HOPS", 1)))
 MAX_THUMB_BYTES = 5 * 1024 * 1024
 STALE_AFTER = 3 * 60 * 60  # seconds before an abandoned temp download folder is removed
 
@@ -87,9 +87,9 @@ class RateLimiter:
         self._next_sweep = now + self.window
 
 
-info_limit = RateLimiter(int(os.environ.get("GRABLY_INFO_PER_MIN", 30)))
-download_limit = RateLimiter(int(os.environ.get("GRABLY_DOWNLOADS_PER_MIN", 10)))
-download_slots = asyncio.Semaphore(int(os.environ.get("GRABLY_MAX_CONCURRENT", 3)))
+info_limit = RateLimiter(int(os.environ.get("GRABBLY_INFO_PER_MIN", 30)))
+download_limit = RateLimiter(int(os.environ.get("GRABBLY_DOWNLOADS_PER_MIN", 10)))
+download_slots = asyncio.Semaphore(int(os.environ.get("GRABBLY_MAX_CONCURRENT", 3)))
 
 
 def client_ip(request: Request) -> str:
@@ -119,7 +119,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Grabbly", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
-origins = [o.strip() for o in os.environ.get("GRABLY_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+origins = [o.strip() for o in os.environ.get("GRABBLY_ALLOWED_ORIGINS", "").split(",") if o.strip()]
 if origins:  # only needed when the website is hosted somewhere else than the API
     app.add_middleware(
         CORSMiddleware,
@@ -155,8 +155,8 @@ async def response_headers(request: Request, call_next):
     return response
 
 
-@app.exception_handler(downloader.GrablyError)
-async def grably_error(_request: Request, exc: downloader.GrablyError):
+@app.exception_handler(downloader.GrabblyError)
+async def grabbly_error(_request: Request, exc: downloader.GrabblyError):
     return error(exc.message, exc.status)
 
 

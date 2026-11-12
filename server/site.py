@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-log = logging.getLogger("grably.site")
+log = logging.getLogger("grabbly.site")
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"  # everything the website serves (pages, CSS, JS, fonts, images)
@@ -36,16 +36,16 @@ class Ads:
 
 
 def ads_from_env(env: Optional[dict] = None) -> Optional[Ads]:
-    """AdSense IDs from GRABLY_ADSENSE_CLIENT and GRABLY_ADSENSE_SLOT, or None when either is
+    """AdSense IDs from GRABBLY_ADSENSE_CLIENT and GRABBLY_ADSENSE_SLOT, or None when either is
     missing or doesn't look right (ads stay off rather than showing broken ad spaces)."""
     env = os.environ if env is None else env
-    client = (env.get("GRABLY_ADSENSE_CLIENT") or "").strip()
-    slot = (env.get("GRABLY_ADSENSE_SLOT") or "").strip()
+    client = (env.get("GRABBLY_ADSENSE_CLIENT") or "").strip()
+    slot = (env.get("GRABBLY_ADSENSE_SLOT") or "").strip()
     if client and not PUBLISHER_ID.fullmatch(client):
-        log.warning("GRABLY_ADSENSE_CLIENT should look like ca-pub-1234567890123456; ads are off")
+        log.warning("GRABBLY_ADSENSE_CLIENT should look like ca-pub-1234567890123456; ads are off")
         return None
     if slot and not AD_UNIT_ID.fullmatch(slot):
-        log.warning("GRABLY_ADSENSE_SLOT should be the numeric ad unit ID; ads are off")
+        log.warning("GRABBLY_ADSENSE_SLOT should be the numeric ad unit ID; ads are off")
         return None
     return Ads(client, slot) if client and slot else None
 
@@ -63,11 +63,11 @@ def render(html: str, public: Path, ads: Optional[Ads]) -> str:
         html = html.replace(f'"{rel}"', f'"{rel}?v={asset_digest(public, rel)}"')
     if ads:
         html = html.replace(
-            '<meta name="grably-ads-client" content="">',
-            f'<meta name="grably-ads-client" content="{ads.client}">\n'
+            '<meta name="grabbly-ads-client" content="">',
+            f'<meta name="grabbly-ads-client" content="{ads.client}">\n'
             f'  <meta name="google-adsense-account" content="{ads.client}">',
         )
-        html = html.replace('<meta name="grably-ads-slot" content="">', f'<meta name="grably-ads-slot" content="{ads.slot}">')
+        html = html.replace('<meta name="grabbly-ads-slot" content="">', f'<meta name="grabbly-ads-slot" content="{ads.slot}">')
     return html
 
 
@@ -103,4 +103,4 @@ if __name__ == "__main__":
     current = ads_from_env()
     for f in build(ads=current):
         log.info("built %s", f.relative_to(ROOT))
-    log.info("ads: %s", "on" if current else "off (set GRABLY_ADSENSE_CLIENT and GRABLY_ADSENSE_SLOT to turn them on)")
+    log.info("ads: %s", "on" if current else "off (set GRABBLY_ADSENSE_CLIENT and GRABBLY_ADSENSE_SLOT to turn them on)")

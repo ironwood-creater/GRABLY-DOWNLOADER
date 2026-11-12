@@ -23,19 +23,19 @@ Built with Kotlin and Jetpack Compose. Android 10 or newer.
 
 ## Server address
 
-The app talks to the live Grabbly site, https://grably-downloader-server.vercel.app, by default
+The app talks to the live Grabbly site, https://grabbly-downloader-server.vercel.app, by default
 (set in `app/build.gradle.kts`). To use another server:
 
 - **GitHub build**: in the repository go to Settings → Secrets and variables → Actions →
-  Variables, and add `GRABLY_API_URL` with the address. Or run the "Android app" workflow by
+  Variables, and add `GRABBLY_API_URL` with the address. Or run the "Android app" workflow by
   hand and type the address in.
-- **On your computer**: put `grably.apiBaseUrl=https://…` in `android/gradle.properties`, or
-  pass `-Pgrably.apiBaseUrl=https://…` to Gradle.
+- **On your computer**: put `grabbly.apiBaseUrl=https://…` in `android/gradle.properties`, or
+  pass `-Pgrabbly.apiBaseUrl=https://…` to Gradle.
 
 ## Get the APK
 
 Every push that changes `android/` runs the **Android app** workflow on GitHub Actions. Open
-the run and download **grably-debug-apk** under Artifacts. Unzip it and install the `.apk` on a
+the run and download **grabbly-debug-apk** under Artifacts. Unzip it and install the `.apk` on a
 phone (you'll need to allow installing apps from that source).
 
 ## Build it yourself
@@ -63,19 +63,19 @@ secrets (Settings → Secrets and variables → Actions → New repository secre
 
 | Secret | Value |
 |---|---|
-| `GRABLY_UPLOAD_KEYSTORE_BASE64` | the keystore file, base64-encoded |
-| `GRABLY_UPLOAD_KEYSTORE_PASSWORD` | the keystore password |
-| `GRABLY_UPLOAD_KEY_ALIAS` | the key's alias |
-| `GRABLY_UPLOAD_KEY_PASSWORD` | the key's password (same as the keystore password for PKCS12 keys) |
+| `GRABBLY_UPLOAD_KEYSTORE_BASE64` | the keystore file, base64-encoded |
+| `GRABBLY_UPLOAD_KEYSTORE_PASSWORD` | the keystore password |
+| `GRABBLY_UPLOAD_KEY_ALIAS` | the key's alias |
+| `GRABBLY_UPLOAD_KEY_PASSWORD` | the key's password (same as the keystore password for PKCS12 keys) |
 
 To make a new key yourself instead:
 
 ```bash
-keytool -genkeypair -keystore grably-upload-key.jks -storetype PKCS12 -alias grably-upload -keyalg RSA -keysize 4096 -validity 10000
+keytool -genkeypair -keystore grabbly-upload-key.jks -storetype PKCS12 -alias grabbly-upload -keyalg RSA -keysize 4096 -validity 10000
 ```
 
 ```bash
-base64 -w0 grably-upload-key.jks > grably-upload-key.base64.txt
+base64 -w0 grabbly-upload-key.jks > grabbly-upload-key.base64.txt
 ```
 
 Keep the key and its password somewhere safe and never commit them. With Play App Signing,
@@ -83,7 +83,7 @@ Google keeps the real app signing key, so a lost upload key can be reset through
 
 ### 2. Get the bundle
 
-Run the **Android app** workflow (or push a change). Its **grably-release** artifact contains
+Run the **Android app** workflow (or push a change). Its **grabbly-release** artifact contains
 `app-release.aab`. Each run has a higher version code (the run number), which Play requires
 for every new upload. The run also checks Google Play's 16 KB page size rule.
 

@@ -172,16 +172,16 @@ def ads(monkeypatch):
 
 def test_no_ads_until_configured(client):
     html = client.get("/").text
-    assert '<meta name="grably-ads-client" content="">' in html
+    assert '<meta name="grabbly-ads-client" content="">' in html
     assert "google-adsense-account" not in html
     assert client.get("/ads.txt").status_code == 404
 
 
 def test_adsense_ids_are_filled_in_and_ads_txt_is_served(client, ads):
     html = client.get("/").text
-    assert '<meta name="grably-ads-client" content="ca-pub-1234567890123456">' in html
+    assert '<meta name="grabbly-ads-client" content="ca-pub-1234567890123456">' in html
     assert '<meta name="google-adsense-account" content="ca-pub-1234567890123456">' in html
-    assert '<meta name="grably-ads-slot" content="9876543210">' in html
+    assert '<meta name="grabbly-ads-slot" content="9876543210">' in html
     r = client.get("/ads.txt")
     assert r.status_code == 200
     assert r.text == "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"

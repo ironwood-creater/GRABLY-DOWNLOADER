@@ -4,7 +4,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	// Must match the Worker's name in the Cloudflare dashboard
-	"name": "grably-downloader",
+	"name": "grabbly-downloader",
 	"main": "cloudflare/worker.ts",
 	"compatibility_date": "2026-10-30",
 	"observability": { "enabled": true },
@@ -18,7 +18,7 @@
 
 	"containers": [
 		{
-			"class_name": "GrablyServer",
+			"class_name": "GrabblyServer",
 			"image": "./Dockerfile",
 			// 1/2 vCPU, 4 GiB memory, 8 GB disk: room for yt-dlp + ffmpeg and 500 MB downloads.
 			// "basic" (1/4 vCPU, 1 GiB, 4 GB) costs less if traffic is light.
@@ -27,10 +27,10 @@
 		}
 	],
 	"durable_objects": {
-		"bindings": [{ "name": "GRABLY", "class_name": "GrablyServer" }]
+		"bindings": [{ "name": "GRABBLY", "class_name": "GrabblyServer" }]
 	},
 	"exports": {
-		"GrablyServer": { "type": "durable-object", "storage": "sqlite" }
+		"GrabblyServer": { "type": "durable-object", "storage": "sqlite" }
 	},
 
 	"vars": {
@@ -38,8 +38,8 @@
 		"ADSENSE_CLIENT": "",
 		"ADSENSE_SLOT": "",
 		// "1" offers MP3 downloads, "0" turns them off
-		"GRABLY_AUDIO": "1"
+		"GRABBLY_AUDIO": "1"
 	}
-	// Optional secret (Workers → Settings → Variables and Secrets): GRABLY_SECRET, a long random
+	// Optional secret (Workers → Settings → Variables and Secrets): GRABBLY_SECRET, a long random
 	// string used to sign thumbnail links so they keep working after the container restarts.
 }

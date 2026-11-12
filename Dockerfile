@@ -13,13 +13,13 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 COPY public ./public
 COPY server ./server
 
-RUN useradd --create-home grably
-USER grably
+RUN useradd --create-home grabbly
+USER grabbly
 
 ENV PORT=8000 \
-    GRABLY_TRUST_PROXY=1 \
+    GRABBLY_TRUST_PROXY=1 \
     PYTHONUNBUFFERED=1
 EXPOSE 8000
 
-# Visitor IPs for rate limiting come from X-Forwarded-For (see GRABLY_TRUST_PROXY / GRABLY_PROXY_HOPS)
+# Visitor IPs for rate limiting come from X-Forwarded-For (see GRABBLY_TRUST_PROXY / GRABBLY_PROXY_HOPS)
 CMD ["sh", "-c", "exec uvicorn server.app:app --host 0.0.0.0 --port ${PORT} --no-server-header"]

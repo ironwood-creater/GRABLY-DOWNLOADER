@@ -1,6 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "grably-downloader-server.vercel.app" }],
+      "destination": "https://grabbly-downloader-server.vercel.app/:path*",
+      "permanent": true
+    }
+  ],
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)android' ':(exclude).github'",
   "functions": {
     "server/app.py": {

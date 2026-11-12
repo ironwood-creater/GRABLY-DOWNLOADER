@@ -290,7 +290,7 @@ def test_tumblr_short_links_are_followed():
     "https://soundcloud.com/artist/track",
     "https://www.bilibili.com/video/BV1xx411c7mD",
 ])
-def test_sites_grably_doesnt_support_are_refused(url):
+def test_sites_grabbly_doesnt_support_are_refused(url):
     with pytest.raises(d.UnsupportedSite) as e:
         d.check_url(url)
     assert e.value.message.endswith("It works with TikTok, Instagram, Facebook, X, Pinterest, Twitch and Tumblr.")

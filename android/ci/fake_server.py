@@ -26,8 +26,8 @@ def opt(id_, kind, fmt, quality, size):
 
 # Picked by a part of the link (keep them distinct: none may contain another); the first is the fallback
 VIDEOS = {
-    "@grably/video/1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grably/video/1234567890", "Grabbly test clip",
-                        "grably", 12, None, [opt("v720", "video", "MP4", "720p", SIZE),
+    "@grabbly/video/1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grabbly/video/1234567890", "Grabbly test clip",
+                        "grabbly", 12, None, [opt("v720", "video", "MP4", "720p", SIZE),
                                              opt("audio", "audio", "MP3", "Audio only", 40_000)]),
     "ava.travels": video("tiktok", "TikTok", "https://www.tiktok.com/@ava.travels/video/7301234567890",
                          "Golden hour drive along the coast", "@ava.travels", 38, "sunset",

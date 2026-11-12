@@ -8,7 +8,7 @@ on:
     branches: [claude/blissful-knuth-6pfc4b]
     paths:
       - ".github/workflows/android-screenshots.yml"
-      - "android/app/src/androidTest/java/com/grably/downloader/ScreenshotTest.kt"
+      - "android/app/src/androidTest/java/com/grabbly/downloader/ScreenshotTest.kt"
   workflow_dispatch:
 
 permissions:
@@ -47,7 +47,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Build the app and its device tests
-        run: ./gradlew assembleDebug assembleDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER"
+        run: ./gradlew assembleDebug assembleDebugAndroidTest -Pgrabbly.apiBaseUrl="$FAKE_SERVER"
 
       - name: Take the screenshots
         uses: reactivecircus/android-emulator-runner@v2
@@ -60,9 +60,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           working-directory: android
           script: |
-            ./gradlew connectedDebugAndroidTest -Pgrably.apiBaseUrl="$FAKE_SERVER" -Pandroid.testInstrumentationRunnerArguments.class=com.grably.downloader.ScreenshotTest || (adb logcat -d -t 300 '*:E' ; exit 1)
+            ./gradlew connectedDebugAndroidTest -Pgrabbly.apiBaseUrl="$FAKE_SERVER" -Pandroid.testInstrumentationRunnerArguments.class=com.grabbly.downloader.ScreenshotTest || (adb logcat -d -t 300 '*:E' ; exit 1)
             mkdir -p store/screenshots/raw
-            adb pull /data/local/tmp/grably-shots/. store/screenshots/raw/
+            adb pull /data/local/tmp/grabbly-shots/. store/screenshots/raw/
             ls -la store/screenshots/raw
 
       - name: Commit the screenshots

@@ -85,9 +85,9 @@ from the `imageio-ffmpeg` package, since Vercel Functions don't include it.
 1. In [Vercel](https://vercel.com/new), import this GitHub repository. Vercel detects FastAPI
    from `pyproject.toml`; keep the default settings.
 2. Under **Settings → Environment Variables**, add:
-   - `GRABLY_SECRET`: a long random string (signs thumbnail links; needed because Vercel runs
+   - `GRABBLY_SECRET`: a long random string (signs thumbnail links; needed because Vercel runs
      several copies of the server).
-   - Optional: `GRABLY_ADSENSE_CLIENT` and `GRABLY_ADSENSE_SLOT` (see the AdSense section).
+   - Optional: `GRABBLY_ADSENSE_CLIENT` and `GRABBLY_ADSENSE_SLOT` (see the AdSense section).
      The build step (`python -m server.site`) adds them to the page and writes `/ads.txt`.
 3. Deploy. Every push to the production branch deploys again.
 
@@ -95,7 +95,7 @@ Good to know:
 - **Plan:** Vercel's free Hobby plan is for personal, non-commercial projects. A site that
   shows ads is commercial, so switch to **Pro** before turning AdSense on.
 - **Limits:** a download has to finish within 5 minutes (the most a Function may run on
-  Hobby; Pro allows more), files are capped at 200 MB (`GRABLY_MAX_MB`), and videos are
+  Hobby; Pro allows more), files are capped at 200 MB (`GRABBLY_MAX_MB`), and videos are
   streamed to the visitor, which counts toward the plan's data transfer.
 - **Blocked downloads:** some sites block requests from cloud servers. If a platform keeps
   failing on Vercel but works locally, that's the reason; a server with a home or
@@ -111,12 +111,12 @@ On Cloudflare the website is served straight from Cloudflare's network (fast, ev
 
 1. In the [Cloudflare dashboard](https://dash.cloudflare.com), go to **Workers & Pages → Create → Import a repository**, connect GitHub and pick this repository.
 2. Use these settings:
-   - **Project name:** `grably-downloader` (it must match `"name"` in `wrangler.jsonc`)
+   - **Project name:** `grabbly-downloader` (it must match `"name"` in `wrangler.jsonc`)
    - **Production branch:** the branch with this code (for example `main`)
    - **Build command:** leave empty
    - **Deploy command:** `npx wrangler deploy`
 3. Click **Deploy**. The first deploy takes several minutes while Cloudflare builds the Docker image and prepares the container. The page may load before downloads work; give it a few minutes.
-4. Open the address it shows (`https://grably-downloader.<your-subdomain>.workers.dev`) and try a download.
+4. Open the address it shows (`https://grabbly-downloader.<your-subdomain>.workers.dev`) and try a download.
 
 After that, every push to the production branch deploys automatically.
 
@@ -140,7 +140,7 @@ npx wrangler deploy
 
 - **Your own domain** (needed for AdSense): in the Worker, go to **Settings → Domains & Routes → Add → Custom domain**. The domain must be on Cloudflare (you can also buy one through Cloudflare).
 - **AdSense IDs:** set `ADSENSE_CLIENT` and `ADSENSE_SLOT` under `vars` in `wrangler.jsonc` and push. The Worker adds Google's verification tag and serves `/ads.txt` automatically.
-- **Optional secret:** in the Worker's **Settings → Variables and Secrets**, add a secret named `GRABLY_SECRET` (a long random string) so thumbnail links keep working after the container restarts.
+- **Optional secret:** in the Worker's **Settings → Variables and Secrets**, add a secret named `GRABBLY_SECRET` (a long random string) so thumbnail links keep working after the container restarts.
 - **Size:** the container uses the `standard-1` instance type (1/2 vCPU, 4 GiB memory). Change `instance_type` in `wrangler.jsonc` to `basic` to spend less, or a larger type if downloads are slow.
 - **Check the setup without deploying:** `npm run check` type-checks the Worker and runs a dry-run deploy (container build skipped).
 
@@ -150,7 +150,7 @@ Static-only hosts such as GitHub Pages can't run the downloader. Besides Cloudfl
 
 1. Create a new web service from this repository and choose **Docker** (the `Dockerfile` is at the root).
 2. The container listens on `$PORT` (default 8000); most hosts set this automatically.
-3. Set `GRABLY_SECRET` to a long random string so thumbnail links stay valid across restarts and multiple instances.
+3. Set `GRABBLY_SECRET` to a long random string so thumbnail links stay valid across restarts and multiple instances.
 
 Things to plan for:
 
@@ -164,21 +164,21 @@ Things to plan for:
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `PORT` | `8000` | Port the server listens on (Docker) |
-| `GRABLY_SECRET` | random per start | Signs thumbnail URLs; set it in production |
-| `GRABLY_AUDIO` | `1` | Offers an "MP3 · Audio only" option; `0` turns it off |
-| `GRABLY_ADSENSE_CLIENT` | none | Your AdSense publisher ID, like `ca-pub-1234567890123456`. Turns ads on (see below) |
-| `GRABLY_ADSENSE_SLOT` | none | The numeric ID of the display ad unit used in the ad spaces |
-| `GRABLY_MAX_MB` | `500` | Largest file the server will send |
-| `GRABLY_MAX_DURATION` | `10800` | Longest video, in seconds (3 hours) |
-| `GRABLY_INFO_PER_MIN` | `30` | Link lookups per visitor per minute |
-| `GRABLY_DOWNLOADS_PER_MIN` | `10` | Downloads per visitor per minute |
-| `GRABLY_MAX_CONCURRENT` | `3` | Downloads processed at the same time per server |
-| `GRABLY_TRUST_PROXY` | `0` (`1` in Docker) | Use `X-Forwarded-For` for visitor IPs; enable only behind a proxy you control |
-| `GRABLY_PROXY_HOPS` | `1` | How many proxies sit in front of the server (for example 2 for a CDN plus a load balancer). The visitor's IP is read that many entries from the right of `X-Forwarded-For`, which visitors can't fake |
-| `GRABLY_ALLOWED_ORIGINS` | none | Comma-separated origins allowed to call the API, if the website is hosted on a different domain |
-| `GRABLY_TMP` | system temp | Where temporary downloads are written |
+| `GRABBLY_SECRET` | random per start | Signs thumbnail URLs; set it in production |
+| `GRABBLY_AUDIO` | `1` | Offers an "MP3 · Audio only" option; `0` turns it off |
+| `GRABBLY_ADSENSE_CLIENT` | none | Your AdSense publisher ID, like `ca-pub-1234567890123456`. Turns ads on (see below) |
+| `GRABBLY_ADSENSE_SLOT` | none | The numeric ID of the display ad unit used in the ad spaces |
+| `GRABBLY_MAX_MB` | `500` | Largest file the server will send |
+| `GRABBLY_MAX_DURATION` | `10800` | Longest video, in seconds (3 hours) |
+| `GRABBLY_INFO_PER_MIN` | `30` | Link lookups per visitor per minute |
+| `GRABBLY_DOWNLOADS_PER_MIN` | `10` | Downloads per visitor per minute |
+| `GRABBLY_MAX_CONCURRENT` | `3` | Downloads processed at the same time per server |
+| `GRABBLY_TRUST_PROXY` | `0` (`1` in Docker) | Use `X-Forwarded-For` for visitor IPs; enable only behind a proxy you control |
+| `GRABBLY_PROXY_HOPS` | `1` | How many proxies sit in front of the server (for example 2 for a CDN plus a load balancer). The visitor's IP is read that many entries from the right of `X-Forwarded-For`, which visitors can't fake |
+| `GRABBLY_ALLOWED_ORIGINS` | none | Comma-separated origins allowed to call the API, if the website is hosted on a different domain |
+| `GRABBLY_TMP` | system temp | Where temporary downloads are written |
 
-To host the website and the API on different domains, set `<meta name="grably-api" content="https://your-api.example.com">` in `public/index.html` and list the website's origin in `GRABLY_ALLOWED_ORIGINS`.
+To host the website and the API on different domains, set `<meta name="grabbly-api" content="https://your-api.example.com">` in `public/index.html` and list the website's origin in `GRABBLY_ALLOWED_ORIGINS`.
 
 ## Performance
 
@@ -200,14 +200,14 @@ Grabbly is completely free: there's no subscription or premium plan. The site ea
 1. Deploy the site on your own domain first (AdSense reviews a live site).
 2. Edit `public/privacy.html` and replace **[add your contact email]** with a real email address.
 3. Apply at [adsense.google.com](https://adsense.google.com) and add your site.
-4. Set your publisher ID (`ca-pub-…`): on Cloudflare in `ADSENSE_CLIENT` under `vars` in `wrangler.jsonc`, on Vercel and other hosts in the `GRABLY_ADSENSE_CLIENT` environment variable (on Vercel, redeploy after changing it). The site then automatically:
+4. Set your publisher ID (`ca-pub-…`): on Cloudflare in `ADSENSE_CLIENT` under `vars` in `wrangler.jsonc`, on Vercel and other hosts in the `GRABBLY_ADSENSE_CLIENT` environment variable (on Vercel, redeploy after changing it). The site then automatically:
    - adds the `google-adsense-account` verification tag to the page, and
    - serves `/ads.txt` with the right line (`google.com, pub-…, DIRECT, f08c47fec0942fa0`).
-5. In AdSense, create a **Display ad** unit (responsive) and put its numeric ID in `ADSENSE_SLOT` (Cloudflare) or `GRABLY_ADSENSE_SLOT` (other hosts). Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
+5. In AdSense, create a **Display ad** unit (responsive) and put its numeric ID in `ADSENSE_SLOT` (Cloudflare) or `GRABBLY_ADSENSE_SLOT` (other hosts). Ads appear in the three ad spaces once both IDs are set; without them the site shows no ads and no empty boxes.
 6. In AdSense, turn on the **Privacy & messaging** consent message for the EEA, UK and Switzerland. Google requires consent there, and the privacy policy says visitors will be asked.
 7. Keep **Auto ads** off. The ad spaces are placed between content sections, well away from the download box and buttons. Ads next to download buttons can be mistaken for them, which is against AdSense rules and can get the account suspended.
 
-If you host the page without the Python server, put the two IDs in the `grably-ads-client` and `grably-ads-slot` meta tags in `public/index.html`, and create an `ads.txt` file yourself.
+If you host the page without the Python server, put the two IDs in the `grabbly-ads-client` and `grabbly-ads-slot` meta tags in `public/index.html`, and create an `ads.txt` file yourself.
 
 ### How the ads are loaded
 
@@ -234,7 +234,7 @@ Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the
 
 - **Colors**: the theme is teal on dark navy, from the logo. Edit the variables in `:root` at the top of `styles.css`: `--teal-500` (`#10B3A3`) is the accent and `--navy-900` (`#0B1A33`) the background. Buttons use navy text on teal, because white on teal is too low-contrast to read comfortably. App mockups keep a light palette, set in the block right after `:root`.
 - **Fonts**: Outfit (headings and mockups) and Inter (body), self-hosted in `public/assets/fonts/` (Latin and Latin-Extended character sets).
-- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `public/assets/js/main.js` (instant feedback in the browser), plus `LinkDetector` in `android/app/src/main/java/com/grably/downloader/data/Platform.kt` (the Android app). Keep them in sync.
+- **Supported sites**: `PLATFORMS` in `server/downloader.py` (the real allowlist) and `PLATFORMS` in `public/assets/js/main.js` (instant feedback in the browser), plus `LinkDetector` in `android/app/src/main/java/com/grabbly/downloader/data/Platform.kt` (the Android app). Keep them in sync.
 
 ## Credits
 

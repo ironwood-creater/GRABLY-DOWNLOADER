@@ -1,5 +1,5 @@
 {
-  "name": "grably",
+  "name": "grabbly",
   "private": true,
   "description": "Grabbly website on Cloudflare: Worker + static assets + a Container running the Python download server",
   "scripts": {

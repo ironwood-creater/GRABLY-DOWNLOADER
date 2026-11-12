@@ -11,7 +11,7 @@ on:
       base_url:
         description: "Site to check"
         required: false
-        default: "https://grably-downloader-server.vercel.app"
+        default: "https://grabbly-downloader-server.vercel.app"
 
 permissions:
   contents: read
@@ -23,4 +23,4 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Check the live site
-        run: python3 .github/scripts/live_check.py "${{ inputs.base_url || 'https://grably-downloader-server.vercel.app' }}"
+        run: python3 .github/scripts/live_check.py "${{ inputs.base_url || 'https://grabbly-downloader-server.vercel.app' }}"

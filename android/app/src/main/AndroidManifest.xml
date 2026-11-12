@@ -23,14 +23,14 @@
     </queries>
 
     <application
-        android:name=".GrablyApp"
+        android:name=".GrabblyApp"
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Grably">
+        android:theme="@style/Theme.Grabbly">
 
         <activity
             android:name=".MainActivity"
