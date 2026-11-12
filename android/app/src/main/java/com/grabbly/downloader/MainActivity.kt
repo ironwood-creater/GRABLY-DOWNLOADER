@@ -19,6 +19,9 @@ class MainActivity : ComponentActivity() {
     /** Set when a download notification is tapped */
     private val openDownloads = MutableStateFlow(false)
 
+    /** Set when a "Saved" notification is tapped: the download to open in the player */
+    private val openPlayer = MutableStateFlow<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -28,6 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val shared by sharedText.collectAsStateWithLifecycle()
             val showDownloads by openDownloads.collectAsStateWithLifecycle()
+            val playId by openPlayer.collectAsStateWithLifecycle()
             GrabblyTheme {
                 GrabblyAppContent(
                     container = appContainer,
@@ -35,6 +39,8 @@ class MainActivity : ComponentActivity() {
                     onSharedTextHandled = { sharedText.value = null },
                     openDownloads = showDownloads,
                     onOpenDownloadsHandled = { openDownloads.value = false },
+                    openPlayer = playId,
+                    onOpenPlayerHandled = { openPlayer.value = null },
                 )
             }
         }
@@ -55,10 +61,12 @@ class MainActivity : ComponentActivity() {
                 if (!text.isNullOrBlank()) sharedText.value = text
             }
             intent.getBooleanExtra(EXTRA_OPEN_DOWNLOADS, false) -> openDownloads.value = true
+            intent.getLongExtra(EXTRA_PLAY_ID, -1L) >= 0 -> openPlayer.value = intent.getLongExtra(EXTRA_PLAY_ID, -1L)
         }
     }
 
     companion object {
         const val EXTRA_OPEN_DOWNLOADS = "open_downloads"
+        const val EXTRA_PLAY_ID = "play_id"
     }
 }

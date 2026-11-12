@@ -38,7 +38,11 @@ object FileNames {
 
     /** A file name from the video title when the server didn't send one. */
     fun fromTitle(title: String, mimeType: String): String {
-        val fallback = if (mimeType.startsWith("audio/")) "Grabbly audio" else "Grabbly video"
+        val fallback = when {
+            mimeType.startsWith("audio/") -> "Grabbly audio"
+            mimeType.startsWith("image/") -> "Grabbly photo"
+            else -> "Grabbly video"
+        }
         return clean(title, fallback) + "." + extensionFor(mimeType)
     }
 
@@ -53,6 +57,11 @@ object FileNames {
         "audio/mpeg" -> "mp3"
         "audio/mp4" -> "m4a"
         "audio/ogg" -> "opus"
+        "image/jpeg" -> "jpg"
+        "image/png" -> "png"
+        "image/webp" -> "webp"
+        "image/gif" -> "gif"
+        "image/heic" -> "heic"
         else -> "bin"
     }
 }

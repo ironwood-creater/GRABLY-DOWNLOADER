@@ -28,10 +28,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,89 +54,150 @@ import com.grabbly.downloader.ui.components.PlatformBadge
 import com.grabbly.downloader.ui.components.ProgressLine
 import com.grabbly.downloader.ui.components.SegmentedControl
 import com.grabbly.downloader.ui.components.Thumbnail
+import com.grabbly.downloader.ui.components.copyForUser
 import com.grabbly.downloader.ui.icons.GrabblyIcons
 import com.grabbly.downloader.ui.theme.grabbly
+import com.grabbly.downloader.util.Captions
 import com.grabbly.downloader.util.Format
 import com.grabbly.downloader.util.SystemActions
 
+/**
+ * The Downloads list. With [privateFolder] it is the private folder instead: files kept inside Grabbly,
+ * out of the gallery, opened with the phone's fingerprint, face or PIN ([onOpenPrivate] unlocks it).
+ */
 @Composable
-fun DownloadsScreen(viewModel: DownloadsViewModel, onBack: () -> Unit, onFindVideo: () -> Unit) {
+fun DownloadsScreen(
+    viewModel: DownloadsViewModel,
+    privateFolder: Boolean,
+    onBack: () -> Unit,
+    onFindVideo: () -> Unit,
+    onOpen: (DownloadEntity) -> Unit,
+    onOpenPrivate: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var confirmDelete by remember { mutableStateOf<DownloadEntity?>(null) }
+    val snackbar = remember { SnackbarHostState() }
 
-    Column(
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { snackbar.showSnackbar(it) }
+    }
+
+    Box(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding(),
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(start = 8.dp, end = 20.dp, top = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(GrabblyIcons.ChevronLeft, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
-            }
-            Text(
-                "Downloads",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        SegmentedControl(
-            options = DownloadFilter.entries.map { it.label },
-            selected = state.filter.ordinal,
-            onSelect = { viewModel.setFilter(DownloadFilter.entries[it]) },
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-        )
-
-        if (state.loaded && state.groups.isEmpty()) {
-            EmptyState(filter = state.filter, hasAny = state.totalCount > 0, onFindVideo = onFindVideo)
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .navigationBarsPadding(),
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, end = 12.dp, top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                state.groups.forEach { group ->
-                    item(key = "day-${group.label}", contentType = "header") {
-                        Text(
-                            group.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.grabbly.muted,
-                            modifier = Modifier
-                                .animateItem()
-                                .padding(top = 10.dp, bottom = 2.dp, start = 4.dp),
-                        )
+                IconButton(onClick = onBack) {
+                    Icon(GrabblyIcons.ChevronLeft, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
+                }
+                Text(
+                    if (privateFolder) "Private folder" else "Downloads",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                )
+                if (!privateFolder) {
+                    IconButton(onClick = onOpenPrivate) {
+                        Icon(GrabblyIcons.Lock, contentDescription = "Private folder", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
                     }
-                    items(group.items, key = { it.id }, contentType = { "download" }) { item ->
-                        DownloadRow(
-                            item = item,
-                            modifier = Modifier.animateItem(),
-                            onPlay = { SystemActions.play(context, item) },
-                            onShare = { SystemActions.share(context, item) },
-                            onRetry = { viewModel.retry(item) },
-                            onCancel = { viewModel.cancel(item) },
-                            onRemove = { viewModel.remove(item, deleteFile = false) },
-                            onDelete = { confirmDelete = item },
-                        )
+                }
+            }
+            if (privateFolder) {
+                Row(
+                    Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(GrabblyIcons.Lock, contentDescription = null, tint = MaterialTheme.grabbly.muted, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Only you can open these. They aren't in your gallery.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.grabbly.muted,
+                    )
+                }
+            } else {
+                SegmentedControl(
+                    options = DownloadFilter.entries.map { it.label },
+                    selected = state.filter.ordinal,
+                    onSelect = { viewModel.setFilter(DownloadFilter.entries[it]) },
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                )
+            }
+
+            if (state.loaded && state.groups.isEmpty()) {
+                EmptyState(privateFolder = privateFolder, filter = state.filter, hasAny = state.totalCount > 0, onFindVideo = onFindVideo)
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding(),
+                ) {
+                    state.groups.forEach { group ->
+                        item(key = "day-${group.label}", contentType = "header") {
+                            Text(
+                                group.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.grabbly.muted,
+                                modifier = Modifier
+                                    .animateItem()
+                                    .padding(top = 10.dp, bottom = 2.dp, start = 4.dp),
+                            )
+                        }
+                        items(group.items, key = { it.id }, contentType = { "download" }) { item ->
+                            DownloadRow(
+                                item = item,
+                                modifier = Modifier.animateItem(),
+                                onOpen = { onOpen(item) },
+                                actions = RowActions(
+                                    openWith = { SystemActions.openWith(context, item) },
+                                    share = { SystemActions.share(context, item) },
+                                    copyCaption = { item.caption?.let { copyForUser(context, "Caption", it) } },
+                                    copyHashtags = { Captions.hashtags(item.caption)?.let { copyForUser(context, "Hashtags", it) } },
+                                    moveToPrivate = { viewModel.moveToPrivate(item) },
+                                    moveToGallery = { viewModel.moveToGallery(item) },
+                                    retry = { viewModel.retry(item) },
+                                    cancel = { viewModel.cancel(item) },
+                                    remove = { viewModel.remove(item, deleteFile = false) },
+                                    delete = { confirmDelete = item },
+                                ),
+                            )
+                        }
                     }
                 }
             }
         }
+        SnackbarHost(
+            snackbar,
+            Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),
+        )
     }
 
     confirmDelete?.let { item ->
+        val what = kindOf(item)
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
-            title = { Text("Delete this video?") },
-            text = { Text("“${item.title}” will be removed from your phone and from this list.") },
+            title = { Text("Delete this $what?") },
+            text = {
+                Text(
+                    if (item.isPrivate) {
+                        "“${item.title}” will be deleted from your private folder."
+                    } else {
+                        "“${item.title}” will be removed from your phone and from this list."
+                    },
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -147,19 +211,29 @@ fun DownloadsScreen(viewModel: DownloadsViewModel, onBack: () -> Unit, onFindVid
     }
 }
 
+private fun kindOf(item: DownloadEntity) = when {
+    item.isPhoto -> "photo"
+    item.isAudio -> "audio"
+    else -> "video"
+}
+
+/** What the "More options" menu can do with a row. */
+private class RowActions(
+    val openWith: () -> Unit,
+    val share: () -> Unit,
+    val copyCaption: () -> Unit,
+    val copyHashtags: () -> Unit,
+    val moveToPrivate: () -> Unit,
+    val moveToGallery: () -> Unit,
+    val retry: () -> Unit,
+    val cancel: () -> Unit,
+    val remove: () -> Unit,
+    val delete: () -> Unit,
+)
+
 @Composable
-private fun DownloadRow(
-    item: DownloadEntity,
-    modifier: Modifier,
-    onPlay: () -> Unit,
-    onShare: () -> Unit,
-    onRetry: () -> Unit,
-    onCancel: () -> Unit,
-    onRemove: () -> Unit,
-    onDelete: () -> Unit,
-) {
+private fun DownloadRow(item: DownloadEntity, modifier: Modifier, onOpen: () -> Unit, actions: RowActions) {
     val complete = item.status == DownloadStatus.COMPLETE
-    val failed = item.status == DownloadStatus.FAILED
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
@@ -168,15 +242,15 @@ private fun DownloadRow(
     ) {
         Row(
             Modifier
-                .clickable(enabled = complete, onClick = onPlay)
+                .clickable(enabled = complete, onClick = onOpen)
                 .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box {
                 Thumbnail(
-                    url = item.thumbnailUrl,
+                    url = if (item.isPhoto && complete) item.contentUri ?: item.thumbnailUrl else item.thumbnailUrl,
                     isAudio = item.isAudio,
-                    showPlay = complete,
+                    showPlay = complete && !item.isPhoto,
                     modifier = Modifier.size(width = 64.dp, height = 84.dp),
                 )
                 Platform.fromKey(item.platform)?.let {
@@ -209,9 +283,18 @@ private fun DownloadRow(
                         )
                         Spacer(Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(GrabblyIcons.Check, contentDescription = null, tint = MaterialTheme.grabbly.success, modifier = Modifier.size(14.dp))
+                            Icon(
+                                if (item.isPrivate) GrabblyIcons.Lock else GrabblyIcons.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.grabbly.success,
+                                modifier = Modifier.size(14.dp),
+                            )
                             Spacer(Modifier.width(4.dp))
-                            Text("Saved", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.grabbly.success)
+                            Text(
+                                if (item.isPrivate) "Private" else "Saved",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.grabbly.success,
+                            )
                         }
                     }
                     DownloadStatus.FAILED -> {
@@ -224,7 +307,7 @@ private fun DownloadRow(
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(
-                            onClick = onRetry,
+                            onClick = actions.retry,
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
                             modifier = Modifier.height(32.dp),
                         ) {
@@ -244,6 +327,7 @@ private fun DownloadRow(
                                 item.status == DownloadStatus.QUEUED -> "Waiting to start…"
                                 item.totalBytes > 0 -> "${Format.size(item.bytesDownloaded)} of ${Format.size(item.totalBytes)}"
                                 item.bytesDownloaded > 0 -> "${Format.size(item.bytesDownloaded)} downloaded"
+                                item.isPhoto -> "Getting the photo…"
                                 else -> "Preparing your video…"
                             },
                             style = MaterialTheme.typography.bodySmall,
@@ -254,21 +338,13 @@ private fun DownloadRow(
                     }
                 }
             }
-            RowMenu(item = item, onPlay = onPlay, onShare = onShare, onRetry = onRetry, onCancel = onCancel, onRemove = onRemove, onDelete = onDelete)
+            RowMenu(item = item, onOpen = onOpen, actions = actions)
         }
     }
 }
 
 @Composable
-private fun RowMenu(
-    item: DownloadEntity,
-    onPlay: () -> Unit,
-    onShare: () -> Unit,
-    onRetry: () -> Unit,
-    onCancel: () -> Unit,
-    onRemove: () -> Unit,
-    onDelete: () -> Unit,
-) {
+private fun RowMenu(item: DownloadEntity, onOpen: () -> Unit, actions: RowActions) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -278,17 +354,29 @@ private fun RowMenu(
             val close = { open = false }
             when (item.status) {
                 DownloadStatus.COMPLETE -> {
-                    MenuAction("Play", close, onPlay)
-                    MenuAction("Share", close, onShare)
-                    MenuAction("Remove from list", close, onRemove)
-                    MenuAction("Delete video", close, onDelete)
+                    MenuAction(if (item.isPhoto) "View" else "Play", close, onOpen)
+                    if (!item.isPrivate) {
+                        MenuAction("Open in another app", close, actions.openWith)
+                        MenuAction("Share", close, actions.share)
+                    }
+                    if (!item.caption.isNullOrBlank()) {
+                        MenuAction("Copy caption", close, actions.copyCaption)
+                        if (Captions.hashtags(item.caption) != null) MenuAction("Copy hashtags", close, actions.copyHashtags)
+                    }
+                    if (item.isPrivate) {
+                        MenuAction("Move to gallery", close, actions.moveToGallery)
+                    } else {
+                        MenuAction("Move to private folder", close, actions.moveToPrivate)
+                        MenuAction("Remove from list", close, actions.remove)
+                    }
+                    MenuAction("Delete ${kindOf(item)}", close, actions.delete)
                 }
                 DownloadStatus.FAILED -> {
-                    MenuAction("Try again", close, onRetry)
-                    MenuAction("Remove from list", close, onRemove)
+                    MenuAction("Try again", close, actions.retry)
+                    MenuAction("Remove from list", close, actions.remove)
                 }
                 DownloadStatus.QUEUED, DownloadStatus.RUNNING -> {
-                    MenuAction("Cancel download", close, onCancel)
+                    MenuAction("Cancel download", close, actions.cancel)
                 }
             }
         }
@@ -307,9 +395,11 @@ private fun MenuAction(label: String, close: () -> Unit, run: () -> Unit) {
 }
 
 @Composable
-private fun EmptyState(filter: DownloadFilter, hasAny: Boolean, onFindVideo: () -> Unit) {
+private fun EmptyState(privateFolder: Boolean, filter: DownloadFilter, hasAny: Boolean, onFindVideo: () -> Unit) {
     val (title, body) = when {
-        !hasAny -> "No downloads yet" to "Videos you download appear here, and in your phone's gallery."
+        privateFolder -> "Nothing private yet" to
+            "In Downloads, tap ⋮ on a video or photo, then “Move to private folder” to hide it from your gallery."
+        !hasAny -> "No downloads yet" to "Videos and photos you download appear here, and in your phone's gallery."
         filter == DownloadFilter.Failed -> "Nothing failed" to "Every download worked. Nice."
         else -> "Nothing here yet" to "Finished downloads will show up here."
     }
@@ -328,13 +418,18 @@ private fun EmptyState(filter: DownloadFilter, hasAny: Boolean, onFindVideo: () 
                 .background(MaterialTheme.grabbly.accentSoft),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(GrabblyIcons.Inbox, contentDescription = null, tint = MaterialTheme.grabbly.onAccentSoft, modifier = Modifier.size(30.dp))
+            Icon(
+                if (privateFolder) GrabblyIcons.Lock else GrabblyIcons.Inbox,
+                contentDescription = null,
+                tint = MaterialTheme.grabbly.onAccentSoft,
+                modifier = Modifier.size(30.dp),
+            )
         }
         Spacer(Modifier.height(16.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(6.dp))
         Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.grabbly.muted, textAlign = TextAlign.Center)
-        if (!hasAny) {
+        if (!hasAny && !privateFolder) {
             Spacer(Modifier.height(20.dp))
             Button(
                 onClick = onFindVideo,

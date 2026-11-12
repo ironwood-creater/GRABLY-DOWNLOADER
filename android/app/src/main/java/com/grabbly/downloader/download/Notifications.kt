@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -58,14 +57,15 @@ object Notifications {
             .build()
     }
 
-    fun showSaved(context: Context, downloadId: Long, title: String, uri: Uri, mimeType: String) {
-        val view = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, mimeType)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    /** "Saved to your phone": tapping it opens the file in Grabbly's player. */
+    fun showSaved(context: Context, downloadId: Long, title: String) {
+        val open = Intent(context, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_PLAY_ID, downloadId)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val tap = PendingIntent.getActivity(
             context,
             resultId(downloadId),
-            view,
+            open,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_DONE)

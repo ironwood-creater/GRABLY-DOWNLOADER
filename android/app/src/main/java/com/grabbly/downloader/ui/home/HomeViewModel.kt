@@ -8,10 +8,12 @@ import com.grabbly.downloader.data.DownloadOption
 import com.grabbly.downloader.data.GrabblyApi
 import com.grabbly.downloader.data.LinkCheck
 import com.grabbly.downloader.data.LinkDetector
+import com.grabbly.downloader.data.MediaItem
 import com.grabbly.downloader.data.Platform
 import com.grabbly.downloader.data.VideoInfo
 import com.grabbly.downloader.data.db.DownloadEntity
-import com.grabbly.downloader.data.db.DownloadStatus
+import com.grabbly.downloader.util.QualityPicker
+import com.grabbly.downloader.util.QualityPreference
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -32,15 +34,15 @@ data class HomeUiState(
     val message: String? = null,
     val isError: Boolean = false,
     val loading: Boolean = false,
-    /** Set when a video was found: shows the quality picker */
+    /** Set when a post was found and the user chooses what to save: shows the quality or item picker */
     val video: VideoInfo? = null,
 )
 
 sealed interface HomeEvent {
-    data class DownloadStarted(val title: String) : HomeEvent
+    data class DownloadStarted(val title: String, val count: Int = 1) : HomeEvent
 }
 
-class HomeViewModel(private val container: AppContainer) : ViewModel() {
+class HomeViewModel(container: AppContainer) : ViewModel() {
     private val api = container.api
     private val downloads = container.downloads
     private val settings = container.settings
@@ -51,9 +53,12 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events: Flow<HomeEvent> = _events.receiveAsFlow()
 
-    /** The newest finished download, for the "Recently downloaded" card. */
+    /** The quality chosen in Settings (shown on the album picker) */
+    val quality: StateFlow<QualityPreference> = settings.quality
+
+    /** The newest finished download outside the private folder, for the "Recently downloaded" card. */
     val latestDownload: StateFlow<DownloadEntity?> = downloads.all
-        .map { list -> list.firstOrNull { it.status == DownloadStatus.COMPLETE } }
+        .map { list -> list.firstOrNull { it.isComplete && !it.isPrivate } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** How many downloads are still running, for the badge on the Downloads button. */
@@ -104,7 +109,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         if (_state.value.loading || _state.value.video != null) return
         if (check.url == (LinkDetector.check(_state.value.input) as? LinkCheck.Supported)?.url) return
         onInputChange(text)
-        lookup()
+        lookup(copied = true)
     }
 
     /** A link shared to Grabbly from another app's Share menu. */
@@ -112,7 +117,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         lookupJob?.cancel()
         _state.update { it.copy(video = null, loading = false) }
         onInputChange(text)
-        lookup()
+        lookup(copied = true)
     }
 
     fun clear() {
@@ -120,7 +125,11 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         _state.value = HomeUiState()
     }
 
-    fun lookup() {
+    /**
+     * Looks the link up. [copied] is true for a link copied or shared in another app: with
+     * "Download copied links automatically" on, it then downloads without asking anything.
+     */
+    fun lookup(copied: Boolean = false) {
         val current = _state.value
         if (current.loading) return
         val url = when (val check = LinkDetector.check(current.input)) {
@@ -135,10 +144,16 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         lookupJob = viewModelScope.launch {
             try {
                 val video = api.info(url)
-                if (video.options.isEmpty()) {
-                    fail("This video can't be downloaded. It may be private or removed.")
-                } else {
-                    _state.update { it.copy(loading = false, message = null, video = video) }
+                val items = video.allItems
+                val automatic = copied && settings.autoDownload.value
+                when {
+                    items.all { it.options.isEmpty() } -> fail("This video can't be downloaded. It may be private or removed.")
+                    video.hasSeveral -> if (automatic) startItems(video, items) else show(video)
+                    else -> {
+                        val item = items.first()
+                        val option = QualityPicker.pick(item.options, settings.quality.value, canAsk = !automatic)
+                        if (option == null) show(video) else startOne(video, option, item)
+                    }
                 }
             } catch (e: ApiException) {
                 fail(e.message ?: GrabblyApi.GENERIC_ERROR)
@@ -150,13 +165,43 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         _state.update { it.copy(video = null) }
     }
 
+    /** A choice from the quality sheet (a post with one video or photo). */
     fun download(option: DownloadOption) {
         val video = _state.value.video ?: return
-        _state.update { it.copy(video = null, input = "", detected = null, message = null, isError = false) }
+        startOne(video, option, video.allItems.first())
+    }
+
+    /** The videos and photos picked from an album or carousel. */
+    fun downloadItems(selected: List<MediaItem>) {
+        val video = _state.value.video ?: return
+        startItems(video, selected)
+    }
+
+    private fun show(video: VideoInfo) {
+        _state.update { it.copy(loading = false, message = null, video = video) }
+    }
+
+    private fun startOne(video: VideoInfo, option: DownloadOption, item: MediaItem) {
+        resetAfterStart()
         viewModelScope.launch {
-            downloads.start(video, option)
+            downloads.start(video, option, item)
             _events.send(HomeEvent.DownloadStarted(video.title))
         }
+    }
+
+    private fun startItems(video: VideoInfo, selected: List<MediaItem>) {
+        val preference = settings.quality.value
+        val picks = selected.mapNotNull { item -> QualityPicker.pick(item.options, preference, canAsk = false)?.let { item to it } }
+        if (picks.isEmpty()) return fail("Nothing in this post can be downloaded.")
+        resetAfterStart()
+        viewModelScope.launch {
+            picks.forEach { (item, option) -> downloads.start(video, option, item) }
+            _events.send(HomeEvent.DownloadStarted(video.title, picks.size))
+        }
+    }
+
+    private fun resetAfterStart() {
+        _state.update { it.copy(video = null, input = "", detected = null, message = null, isError = false, loading = false) }
     }
 
     private fun fail(message: String) {

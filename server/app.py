@@ -20,6 +20,7 @@ import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
+from typing import Optional
 from urllib.parse import urlencode, urlsplit
 
 import httpx
@@ -180,6 +181,12 @@ def sign(value: str) -> str:
 # --------------------------------------------------------------------------
 class InfoRequest(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
+    # The app sets this to get every video and photo in a post, and the caption
+    items: bool = False
+
+
+def thumb_link(url: Optional[str]) -> Optional[str]:
+    return f"/api/thumb?{urlencode({'u': url, 's': sign(url)})}" if url else None
 
 
 @app.get("/api/health")
@@ -191,9 +198,13 @@ async def health():
 async def info(body: InfoRequest, request: Request):
     if not info_limit.allow(client_ip(request)):
         return error("You're going a bit fast. Wait a minute and try again.", 429)
-    data = await run_in_threadpool(downloader.fetch_info, body.url)
-    thumb = data.pop("thumbnail", None)
-    data["thumbnail"] = f"/api/thumb?{urlencode({'u': thumb, 's': sign(thumb)})}" if thumb else None
+    if body.items:
+        data = await run_in_threadpool(downloader.fetch_info, body.url, items=True)
+        for item in data.get("items") or []:
+            item["thumbnail"] = thumb_link(item.get("thumbnail"))
+    else:
+        data = await run_in_threadpool(downloader.fetch_info, body.url)
+    data["thumbnail"] = thumb_link(data.pop("thumbnail", None))
     return data
 
 
@@ -202,6 +213,7 @@ async def download(
     request: Request,
     url: str = Query(min_length=1, max_length=2048),
     option: str = Query("best", max_length=8),
+    item: Optional[int] = Query(None, ge=1, le=200),
 ):
     if not download_limit.allow(client_ip(request)):
         return error("You're downloading a bit fast. Wait a minute and try again.", 429)
@@ -210,7 +222,10 @@ async def download(
     # Sweep folders left behind by downloads that were cut off mid-transfer
     await run_in_threadpool(downloader.cleanup_stale, STALE_AFTER)
     async with download_slots:
-        result = await run_in_threadpool(downloader.download, url, option)
+        if item is None:
+            result = await run_in_threadpool(downloader.download, url, option)
+        else:
+            result = await run_in_threadpool(downloader.download, url, option, item=item)
     return FileResponse(
         result.path,
         media_type=result.media_type,

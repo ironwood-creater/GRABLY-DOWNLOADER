@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.grabbly.downloader.data.DownloadOption
 import com.grabbly.downloader.data.Platform
 import com.grabbly.downloader.data.VideoInfo
+import com.grabbly.downloader.ui.components.CaptionActions
 import com.grabbly.downloader.ui.components.PlatformBadge
 import com.grabbly.downloader.ui.components.Thumbnail
 import com.grabbly.downloader.ui.icons.GrabblyIcons
@@ -47,7 +48,7 @@ import com.grabbly.downloader.ui.theme.grabbly
 import com.grabbly.downloader.util.Format
 import kotlinx.coroutines.launch
 
-/** Bottom sheet that shows the found video and its quality choices. */
+/** Bottom sheet that shows the found video or photo and its choices. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoSheet(video: VideoInfo, onDismiss: () -> Unit, onDownload: (DownloadOption) -> Unit) {
@@ -103,8 +104,16 @@ fun VideoSheet(video: VideoInfo, onDismiss: () -> Unit, onDownload: (DownloadOpt
                     }
                 }
             }
+            if (!video.caption.isNullOrBlank()) {
+                Spacer(Modifier.height(14.dp))
+                CaptionActions(video.caption)
+            }
             Spacer(Modifier.height(20.dp))
-            Text("Choose a quality", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                if (video.options.all { it.isPhoto }) "Save the photo" else "Choose a quality",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             Spacer(Modifier.height(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 video.options.forEachIndexed { index, option ->
@@ -150,7 +159,11 @@ private fun OptionRow(option: DownloadOption, recommended: Boolean, onClick: () 
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    if (option.isAudio) GrabblyIcons.Music else GrabblyIcons.Play,
+                    when {
+                        option.isAudio -> GrabblyIcons.Music
+                        option.isPhoto -> GrabblyIcons.Image
+                        else -> GrabblyIcons.Play
+                    },
                     contentDescription = null,
                     tint = if (recommended) MaterialTheme.colorScheme.onPrimary else MaterialTheme.grabbly.onAccentSoft,
                     modifier = Modifier.size(18.dp),
@@ -160,7 +173,11 @@ private fun OptionRow(option: DownloadOption, recommended: Boolean, onClick: () 
             Column(Modifier.weight(1f)) {
                 Text(option.label, style = MaterialTheme.typography.titleSmall)
                 val detail = listOfNotNull(
-                    if (option.isAudio) "Sound only" else "Video with sound",
+                    when {
+                        option.isAudio -> "Sound only"
+                        option.isPhoto -> "Full-size photo"
+                        else -> "Video with sound"
+                    },
                     option.size?.takeIf { it > 0 }?.let { "about ${Format.size(it)}" },
                 ).joinToString(" · ")
                 Text(

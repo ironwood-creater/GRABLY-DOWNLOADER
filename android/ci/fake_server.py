@@ -1,12 +1,14 @@
 """A stand-in Grabbly server for the Android app's on-device tests and store screenshots in CI.
 
-Answers /api/info with sample videos, /api/download with a few hundred KB of bytes, and
-/thumbs/<name>.jpg with the illustrated thumbnails in ci/media/, so the app's whole download
-path (background worker, saving to the gallery, the Downloads list) runs without reaching any
-real site. Listens on port 8000; the emulator reaches it at http://10.0.2.2:8000.
+Answers /api/info with sample videos (and a post with a video and two photos), /api/download with a
+few hundred KB of bytes (or a real JPG for photos), and /thumbs/<name>.jpg with the illustrated
+thumbnails in ci/media/, so the app's whole download path (background worker, saving to the
+gallery, the Downloads list) runs without reaching any real site. Listens on port 8000; the
+emulator reaches it at http://10.0.2.2:8000.
 """
 import json
 import os
+from urllib.parse import parse_qs, urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -37,7 +39,27 @@ VIDEOS = {
                         "Street food tour: 10 dishes under $5", "@foodie.maps", 74, "food",
                         [opt("v1080", "video", "MP4", "1080p", int(31.6 * MB)), opt("v720", "video", "MP4", "720p", int(18.2 * MB)),
                          opt("audio", "audio", "MP3", "Audio only", int(1.7 * MB))]),
+    "/p/Ccarousel": dict(
+        video("instagram", "Instagram", "https://www.instagram.com/p/Ccarousel/", "Beach day album", "@ava.travels", 9, "ocean",
+              [opt("v720", "video", "MP4", "720p", SIZE)]),
+        caption="Beach day with friends #beach #summer",
+        items=[
+            {"index": 1, "kind": "video", "thumbnail": "/thumbs/ocean.jpg", "duration": 9, "options": [opt("v720", "video", "MP4", "720p", SIZE)]},
+            {"index": 2, "kind": "photo", "thumbnail": "/thumbs/sunset.jpg", "width": 1080, "height": 1350,
+             "options": [opt("photo", "photo", "JPG", "1080 × 1350", None)]},
+            {"index": 3, "kind": "photo", "thumbnail": "/thumbs/city.jpg", "width": 1080, "height": 1080,
+             "options": [opt("photo", "photo", "JPG", "1080 × 1080", None)]},
+        ],
+    ),
 }
+
+
+def with_items(found):
+    """What the server answers when the app asks for every item: one item for a single video."""
+    if "items" in found:
+        return found
+    return dict(found, caption=found["title"], items=[{"index": 1, "kind": "video", "thumbnail": found["thumbnail"],
+                                                       "duration": found["duration"], "options": found["options"]}])
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -58,6 +80,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, b'{"error": "Not found"}', "application/json")
         link = request.get("url", "")
         found = next((v for key, v in VIDEOS.items() if key in link), next(iter(VIDEOS.values())))
+        if request.get("items"):
+            found = with_items(found)
         self._send(200, json.dumps(found).encode(), "application/json")
 
     def do_GET(self):
@@ -68,6 +92,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, path.read_bytes(), "image/jpeg")
         if not self.path.startswith("/api/download"):
             return self._send(404, b'{"error": "Not found"}', "application/json")
+        query = parse_qs(urlsplit(self.path).query)
+        if query.get("option") == ["photo"]:
+            item = query.get("item", ["1"])[0]
+            return self._send(200, (MEDIA / "sunset.jpg").read_bytes(), "image/jpeg",
+                              {"Content-Disposition": f'attachment; filename="Beach day album {item}.jpg"'})
         self._send(
             200,
             os.urandom(SIZE),

@@ -44,15 +44,16 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         var pending: Uri? = null
         return try {
             val saved = withContext(Dispatchers.IO) {
-                val request = Request.Builder().url(container.api.downloadUrl(item.sourceUrl, item.optionId)).build()
+                val address = container.api.downloadUrl(item.sourceUrl, item.optionId, item.itemIndex)
+                val request = Request.Builder().url(address).build()
                 container.httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw ApiException(container.api.errorMessage(response.code, response.body.string()))
+                        throw ApiException(container.api.errorMessage(response.code, response.body.string()), response.code)
                     }
                     val body = response.body
                     val total = body.contentLength().coerceAtLeast(0)
                     val mimeType = response.header("Content-Type")?.substringBefore(';')?.trim()?.ifEmpty { null }
-                        ?: if (item.isAudio) "audio/mpeg" else "video/mp4"
+                        ?: item.mimeOrDefault
                     val fileName = ContentDisposition.filename(response.header("Content-Disposition"))
                         ?.let { FileNames.sanitize(it) }
                         ?: FileNames.fromTitle(item.title, mimeType)
@@ -87,17 +88,27 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
                 }
             }
             dao.markComplete(id, saved.uri.toString(), saved.fileName, saved.mimeType, saved.size, System.currentTimeMillis())
-            Notifications.showSaved(applicationContext, id, item.title, saved.uri, saved.mimeType)
+            Notifications.showSaved(applicationContext, id, item.title)
             Result.success()
         } catch (e: CancellationException) {
             // Cancelled by the user, or paused by Android (for example when the connection drops)
             pending?.let { MediaStoreFiles.discard(applicationContext, it) }
             withContext(NonCancellable) { dao.requeueIfRunning(id) }
             throw e
+        } catch (e: ApiException) {
+            pending?.let { MediaStoreFiles.discard(applicationContext, it) }
+            if (e.isBusy && runAttemptCount < MAX_BUSY_RETRIES) {
+                // Several downloads at once (for example a list of links): wait for a free turn
+                withContext(NonCancellable) { dao.requeueIfRunning(id) }
+                return Result.retry()
+            }
+            val message = e.message ?: GrabblyApi.GENERIC_ERROR
+            withContext(NonCancellable) { dao.markFailed(id, message) }
+            Notifications.showFailed(applicationContext, id, item.title, message)
+            Result.failure()
         } catch (e: Exception) {
             pending?.let { MediaStoreFiles.discard(applicationContext, it) }
             val message = when (e) {
-                is ApiException -> e.message ?: GrabblyApi.GENERIC_ERROR
                 is IOException -> "The download was interrupted. Check your connection and try again."
                 else -> GrabblyApi.GENERIC_ERROR
             }
@@ -129,5 +140,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         const val KEY_ID = "download_id"
         const val TAG = "grabbly-download"
         private const val PROGRESS_INTERVAL_MS = 750L
+        /** About 12 minutes of waiting in total, with the growing 20-second steps set in DownloadRepository */
+        private const val MAX_BUSY_RETRIES = 8
     }
 }

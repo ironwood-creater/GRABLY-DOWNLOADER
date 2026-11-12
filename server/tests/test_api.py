@@ -199,3 +199,35 @@ def test_privacy_page_and_robots(client):
 
 def test_audio_downloads_are_on_by_default():
     assert d.Settings().allow_audio is True
+
+
+def test_info_with_items_signs_every_preview(client, monkeypatch):
+    def fake_info(url, items=False):
+        assert items is True
+        return dict(INFO, caption="Hi #tag", items=[
+            {"index": 1, "kind": "video", "thumbnail": "https://cdn.example/1.jpg", "options": INFO["options"]},
+            {"index": 2, "kind": "photo", "thumbnail": "https://cdn.example/2.jpg", "options": []},
+        ])
+
+    monkeypatch.setattr(d, "fetch_info", fake_info)
+    body = client.post("/api/info", json={"url": "https://www.instagram.com/p/Cx/", "items": True}).json()
+    assert body["caption"] == "Hi #tag"
+    assert [i["thumbnail"].startswith("/api/thumb?u=https%3A%2F%2Fcdn.example%2F") for i in body["items"]] == [True, True]
+
+
+def test_download_passes_the_item_on(client, monkeypatch, tmp_path):
+    work = tmp_path / "dl-2"
+    work.mkdir()
+    photo = work / "photo.jpg"
+    photo.write_bytes(b"\xff\xd8\xff" + b"0" * 100)
+    seen = {}
+
+    def fake_download(url, option, item=None):
+        seen.update(option=option, item=item)
+        return d.Download(path=photo, filename="Lake 2.jpg", media_type="image/jpeg", tmpdir=work)
+
+    monkeypatch.setattr(d, "download", fake_download)
+    r = client.get("/api/download", params={"url": "https://www.instagram.com/p/Cx/", "option": "photo", "item": 2})
+    assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    assert seen == {"option": "photo", "item": 2}
+    assert client.get("/api/download", params={"url": "https://x.com/a/status/1", "item": 0}).status_code == 400

@@ -6,10 +6,13 @@ import com.grabbly.downloader.data.DownloadRepository
 import com.grabbly.downloader.data.db.DownloadEntity
 import com.grabbly.downloader.data.db.DownloadStatus
 import com.grabbly.downloader.util.Format
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -52,14 +55,21 @@ data class DownloadsUiState(
     val loaded: Boolean = false,
 )
 
-class DownloadsViewModel(private val downloads: DownloadRepository) : ViewModel() {
+/** The Downloads list, or with [privateFolder] the private folder's. */
+class DownloadsViewModel(private val downloads: DownloadRepository, private val privateFolder: Boolean) : ViewModel() {
     private val filter = MutableStateFlow(DownloadFilter.All)
 
+    private val _messages = Channel<String>(Channel.BUFFERED)
+
+    /** Short confirmations and problems, shown as a snackbar */
+    val messages: Flow<String> = _messages.receiveAsFlow()
+
     val state: StateFlow<DownloadsUiState> = combine(downloads.all, filter) { all, current ->
+        val mine = all.filter { it.isPrivate == privateFolder }
         DownloadsUiState(
             filter = current,
-            groups = groupByDay(all.filter(current::matches)),
-            totalCount = all.size,
+            groups = groupByDay(mine.filter(current::matches)),
+            totalCount = mine.size,
             loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DownloadsUiState())
@@ -78,5 +88,23 @@ class DownloadsViewModel(private val downloads: DownloadRepository) : ViewModel(
 
     fun remove(item: DownloadEntity, deleteFile: Boolean) {
         viewModelScope.launch { downloads.remove(item, deleteFile) }
+    }
+
+    fun moveToPrivate(item: DownloadEntity) {
+        viewModelScope.launch {
+            _messages.send(
+                if (downloads.moveToPrivate(item)) {
+                    "Moved to your private folder. It's no longer in your gallery."
+                } else {
+                    "Couldn't move this file. It may have been deleted from your phone."
+                },
+            )
+        }
+    }
+
+    fun moveToGallery(item: DownloadEntity) {
+        viewModelScope.launch {
+            _messages.send(if (downloads.moveToGallery(item)) "Moved back to your gallery." else "Couldn't move this file.")
+        }
     }
 }

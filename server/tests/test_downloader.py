@@ -302,3 +302,173 @@ def test_sound_only_posts_offer_mp3():
     tumblr = next(p for p in d.PLATFORMS if p.key == "tumblr")
     out = d.summarize(info, tumblr, "https://staff.tumblr.com/post/1")
     assert [o["id"] for o in out["options"]] == ["audio"]
+
+
+# ---------------------------------------------------------------- posts with several videos and photos (app)
+def photo_entry(index, sizes=((150, 150), (480, 600), (1080, 1350)), host="scontent.cdninstagram.com"):
+    return {
+        "playlist_index": index, "formats": [],
+        "thumbnails": [{"url": f"https://{host}/p{index}_{w}.jpg", "width": w, "height": h} for w, h in sizes],
+    }
+
+
+CAROUSEL = {
+    "_type": "playlist", "title": "Post by ava.travels", "channel": "ava.travels",
+    "description": "Golden hour #roadtrip #sunset", "entries": [
+        dict(SAMPLE, playlist_index=1, thumbnail="https://cdn.example/v1.jpg"),
+        photo_entry(2),
+        None,
+        photo_entry(3, sizes=((640, 640),)),
+    ],
+}
+
+
+def test_items_lists_every_video_and_photo_in_a_post():
+    out = d.summarize_items(CAROUSEL, d.platform_for_host("instagram.com"), "u")
+    assert [(i["index"], i["kind"]) for i in out["items"]] == [(1, "video"), (2, "photo"), (3, "photo")]
+    photo = out["items"][1]
+    assert photo["options"] == [{"id": "photo", "kind": "photo", "format": "JPG", "quality": "1080 × 1350", "size": None}]
+    assert photo["_image"].endswith("p2_1080.jpg")       # the full-size picture is downloaded
+    assert photo["thumbnail"].endswith("p2_480.jpg")     # a smaller one is the preview
+    assert out["caption"] == "Golden hour #roadtrip #sunset"
+    assert out["title"] == "Post by ava.travels"
+    # The first item also fills the fields older clients read
+    assert out["options"] == out["items"][0]["options"]
+
+
+def test_single_photo_post():
+    out = d.summarize_items(photo_entry(1) | {"title": "Lake", "description": "Calm"},
+                            d.platform_for_host("pinterest.com"), "u")
+    assert len(out["items"]) == 1 and out["items"][0]["kind"] == "photo"
+    assert out["title"] == "Lake" and out["caption"] == "Calm"
+
+
+def test_photos_are_only_offered_where_photo_posts_exist():
+    with pytest.raises(d.VideoUnavailable):
+        d.summarize_items(photo_entry(1), d.platform_for_host("tiktok.com"), "u")
+
+
+def test_a_too_long_video_in_a_post_is_skipped(monkeypatch):
+    monkeypatch.setattr(d.settings, "max_duration", 60)
+    post = dict(CAROUSEL, entries=[dict(SAMPLE, duration=61, playlist_index=1), photo_entry(2)])
+    out = d.summarize_items(post, d.platform_for_host("instagram.com"), "u")
+    assert [i["kind"] for i in out["items"]] == ["photo"]
+    with pytest.raises(d.TooLarge):
+        d.summarize_items(dict(SAMPLE, duration=61), d.platform_for_host("instagram.com"), "u")
+
+
+def test_long_captions_are_shortened():
+    out = d.summarize_items(dict(SAMPLE, description="a" * 3000), d.PLATFORMS[0], "u")
+    assert len(out["caption"]) == d.CAPTION_LIMIT + 1
+
+
+def test_fetch_info_items_asks_for_the_whole_post_and_hides_image_links():
+    out = d.fetch_info("https://www.instagram.com/p/Cx/", items=True, ydl_factory=lambda o: FakeYDL(o, CAROUSEL))
+    assert FakeYDL.last_opts["playlist_items"] == "1:20"
+    assert FakeYDL.last_opts["ignore_no_formats_error"] is True
+    assert len(out["items"]) == 3
+    assert all("_image" not in i for i in out["items"])
+
+
+def test_website_lookups_are_unchanged():
+    out = d.fetch_info("https://www.instagram.com/p/Cx/", ydl_factory=lambda o: FakeYDL(o, CAROUSEL))
+    assert "items" not in out and "caption" not in out
+    assert FakeYDL.last_opts["playlist_items"] == "1"
+
+
+X_PHOTOS = [{"url": "https://pbs.twimg.com/media/A.jpg?name=orig", "preview": "https://pbs.twimg.com/media/A.jpg?name=small",
+             "width": 2048, "height": 1536}]
+
+
+def test_x_posts_with_only_photos(monkeypatch):
+    monkeypatch.setattr(d, "x_photos", lambda url: (X_PHOTOS, "Four more years."))
+    out = d.fetch_info("https://x.com/a/status/266031293945503744", items=True,
+                       ydl_factory=lambda o: FakeYDL(o, error="ERROR: [twitter] 1: No video could be found in this tweet"))
+    assert [(i["index"], i["kind"]) for i in out["items"]] == [(101, "photo")]
+    assert out["caption"] == "Four more years."
+    assert out["items"][0]["options"][0]["quality"] == "2048 × 1536"
+
+
+def test_x_errors_still_show_when_there_are_no_photos(monkeypatch):
+    monkeypatch.setattr(d, "x_photos", lambda url: ([], None))
+    with pytest.raises(d.VideoUnavailable) as exc:
+        d.fetch_info("https://x.com/a/status/1", items=True,
+                     ydl_factory=lambda o: FakeYDL(o, error="ERROR: [twitter] 1: This account has been suspended"))
+    assert "suspended" in exc.value.message
+
+
+class FakeHttpClient:
+    """Stands in for httpx.Client in x_photos."""
+    def __init__(self, *a, **k):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def get(self, url, params=None):
+        FakeHttpClient.params = params
+
+        class Resp:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {"text": "Hi", "mediaDetails": [
+                    {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/A.jpg", "original_info": {"width": 4, "height": 3}},
+                    {"type": "video", "media_url_https": "https://pbs.twimg.com/ext/B.jpg"},
+                    "junk",
+                ]}
+        return Resp()
+
+
+def test_x_photos_reads_the_embed_answer(monkeypatch):
+    monkeypatch.setattr(d.httpx, "Client", FakeHttpClient)
+    photos, text = d.x_photos("https://x.com/a/status/20")
+    assert text == "Hi"
+    assert photos == [{"url": "https://pbs.twimg.com/media/A.jpg?name=orig", "preview": "https://pbs.twimg.com/media/A.jpg?name=small",
+                       "width": 4, "height": 3}]
+    assert FakeHttpClient.params["id"] == "20" and FakeHttpClient.params["token"]
+    assert d.x_photos("https://x.com/a/likes") == ([], None)
+
+
+def test_photo_download_saves_the_full_size_picture(monkeypatch, tmp_path):
+    monkeypatch.setattr(d.settings, "tmp_root", tmp_path)
+    fetched = []
+
+    def fake_fetch(url, folder):
+        fetched.append(url)
+        path = folder / "photo.jpg"
+        path.write_bytes(b"\xff\xd8\xff")
+        return path, "image/jpeg"
+
+    monkeypatch.setattr(d, "fetch_image", fake_fetch)
+    result = d.download("https://www.instagram.com/p/Cx/", "photo", item=2, ydl_factory=lambda o: FakeYDL(o, CAROUSEL))
+    assert fetched == ["https://scontent.cdninstagram.com/p2_1080.jpg"]
+    assert result.media_type == "image/jpeg"
+    assert result.filename == "Post by ava.travels 2.jpg"
+    result.cleanup()
+    assert not result.tmpdir.exists()
+    with pytest.raises(d.VideoUnavailable):  # item 1 is a video, not a photo
+        d.download("https://www.instagram.com/p/Cx/", "photo", item=1, ydl_factory=lambda o: FakeYDL(o, CAROUSEL))
+
+
+@pytest.mark.parametrize("url", ["https://evil.example/a.jpg", "http://pbs.twimg.com/a.jpg", "https://twimg.com.evil.example/a.jpg"])
+def test_photos_only_come_from_the_platforms_image_servers(url, tmp_path):
+    with pytest.raises(d.VideoUnavailable):
+        d.fetch_image(url, tmp_path)
+
+
+@pytest.mark.parametrize("item", [0, -1, 500])
+def test_download_rejects_unknown_items(item):
+    with pytest.raises(d.InvalidLink):
+        d.download("https://www.instagram.com/p/Cx/", "v720", item=item)
+
+
+def test_one_video_of_a_post_can_be_downloaded(monkeypatch, tmp_path):
+    monkeypatch.setattr(d.settings, "tmp_root", tmp_path)
+    with pytest.raises(d.VideoUnavailable):
+        d.download("https://www.instagram.com/p/Cx/", "v720", item=3, ydl_factory=lambda o: FakeYDL(o, error="ERROR: removed"))
+    assert FakeYDL.last_opts["playlist_items"] == "3"

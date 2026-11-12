@@ -13,7 +13,7 @@ val apiBaseUrl: String = (findProperty("grabbly.apiBaseUrl") as String?).orEmpty
 
 // Google Play needs a higher versionCode for every upload: CI passes the run number.
 val appVersionCode = (findProperty("grabbly.versionCode") as String?)?.toIntOrNull() ?: 1
-val appVersionName = (findProperty("grabbly.versionName") as String?)?.ifBlank { null } ?: "1.2.0"
+val appVersionName = (findProperty("grabbly.versionName") as String?)?.ifBlank { null } ?: "1.3.0"
 
 // Upload key for Google Play, from environment variables (GitHub secrets in CI) or gradle properties.
 // Without it, release builds are unsigned and have to be signed before uploading.

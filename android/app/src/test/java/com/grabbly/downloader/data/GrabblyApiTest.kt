@@ -86,7 +86,11 @@ class GrabblyApiTest {
         val request = server.requests.single()
         assertEquals("POST", request.method)
         assertEquals("https://grabbly.example.com/api/info", request.url.toString())
-        assertEquals("""{"url":"https://vm.tiktok.com/abc"}""", server.bodies.single())
+        assertEquals("""{"url":"https://vm.tiktok.com/abc","items":true}""", server.bodies.single())
+        // An answer without "items" (an older server) still gives one item to download
+        assertEquals(1, video.allItems.size)
+        assertEquals(listOf("v1080", "audio"), video.allItems[0].options.map { it.id })
+        assertFalse(video.hasSeveral)
     }
 
     @Test
@@ -124,10 +128,54 @@ class GrabblyApiTest {
     }
 
     @Test
+    fun readsEveryItemOfAPost() {
+        val carousel = """
+            {
+              "platform": "instagram", "platform_name": "Instagram", "url": "https://www.instagram.com/p/Cx/",
+              "title": "Post by ava", "thumbnail": "/api/thumb?u=1", "caption": "Sunset #roadtrip",
+              "options": [{"id": "v720", "kind": "video", "format": "MP4", "quality": "720p"}],
+              "items": [
+                {"index": 1, "kind": "video", "thumbnail": "/api/thumb?u=1", "duration": 12,
+                 "options": [{"id": "v720", "kind": "video", "format": "MP4", "quality": "720p"}]},
+                {"index": 2, "kind": "photo", "thumbnail": "/api/thumb?u=2", "width": 1080, "height": 1350,
+                 "options": [{"id": "photo", "kind": "photo", "format": "JPG", "quality": "1080 × 1350"}]}
+              ]
+            }
+        """.trimIndent()
+        val video = runBlocking { api(FakeServer { 200 to carousel }).info("https://www.instagram.com/p/Cx/") }
+        assertTrue(video.hasSeveral)
+        assertEquals("Sunset #roadtrip", video.caption)
+        assertEquals(listOf("video", "photo"), video.items.map { it.kind })
+        assertTrue(video.items[1].isPhoto)
+        assertTrue(video.items[1].options.single().isPhoto)
+        assertEquals("JPG · 1080 × 1350", video.items[1].options.single().label)
+        assertEquals("https://grabbly.example.com/api/thumb?u=2", video.items[1].thumbnail)
+    }
+
+    @Test
+    fun busyAnswersCanBeTriedAgain() {
+        try {
+            runBlocking { api(FakeServer { 429 to "" }).info("https://x.com/a/status/1") }
+            fail("expected an error")
+        } catch (e: ApiException) {
+            assertTrue(e.isBusy)
+        }
+        try {
+            runBlocking { api(FakeServer { 422 to """{"error": "Private"}""" }).info("https://x.com/a/status/1") }
+            fail("expected an error")
+        } catch (e: ApiException) {
+            assertFalse(e.isBusy)
+        }
+    }
+
+    @Test
     fun buildsDownloadAddresses() {
         val url = api(FakeServer { 200 to "" }).downloadUrl("https://x.com/a/status/1?s=20&t=a b", "v720")
         assertEquals("/api/download", url.encodedPath)
         assertEquals("https://x.com/a/status/1?s=20&t=a b", url.queryParameter("url"))
         assertEquals("v720", url.queryParameter("option"))
+        assertNull(url.queryParameter("item"))
+        val photo = api(FakeServer { 200 to "" }).downloadUrl("https://www.instagram.com/p/Cx/", "photo", item = 2)
+        assertEquals("2", photo.queryParameter("item"))
     }
 }

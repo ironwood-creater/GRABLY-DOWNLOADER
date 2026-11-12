@@ -10,6 +10,7 @@ used to fetch arbitrary URLs.
 from __future__ import annotations
 
 import logging
+import math
 import os
 import re
 import shutil
@@ -24,6 +25,11 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import httpx
 import yt_dlp
 from yt_dlp.utils import DownloadError
+
+try:  # used to ask X for the photos in a post; yt-dlp keeps it outside its public utils
+    from yt_dlp.jsinterp import js_number_to_string
+except ImportError:  # pragma: no cover - only if yt-dlp moves it
+    js_number_to_string = None
 
 log = logging.getLogger("grabbly.downloader")
 
@@ -84,7 +90,15 @@ if FFMPEG is None:
 
 USER_AGENT = "Mozilla/5.0 (compatible; GrabblyBot/1.0)"
 MAX_REDIRECTS = 5
-OPTION_RE = re.compile(r"best|audio|v\d{3,4}")
+OPTION_RE = re.compile(r"best|audio|photo|v\d{3,4}")
+
+# Posts with several videos or photos (the app asks for all of them; the website only for the first)
+MAX_ITEMS = 20
+PHOTO_PLATFORMS = {"instagram", "pinterest", "x"}       # where photo posts can be saved
+IMAGE_HOSTS = ("cdninstagram.com", "fbcdn.net", "pinimg.com", "twimg.com")
+IMAGE_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif", "image/heic": ".heic"}
+X_PHOTO_INDEX = 100   # X photos come from a second source; numbered from 101 so they never clash with videos
+CAPTION_LIMIT = 2200  # Instagram's own caption limit
 
 
 # --------------------------------------------------------------------------
@@ -368,9 +382,8 @@ def _pick_tiers(resolutions: list[int], limit: int = 3) -> list[int]:
     return tiers
 
 
-def summarize(info: dict, platform: Platform, url: str) -> dict:
-    """Turn a yt-dlp info dict into what the website needs."""
-    info = _single_entry(info)
+def _media_options(info: dict) -> tuple[list[dict], bool]:
+    """The quality choices for one video (or sound-only post), and whether it is sound only."""
     formats = info.get("formats") or ([info] if info.get("url") else [])
     videos = [f for f in formats if _has_video(f)]
     sound_only = not videos and any(_has_audio(f) for f in formats)  # e.g. a Tumblr audio post
@@ -399,27 +412,210 @@ def summarize(info: dict, platform: Platform, url: str) -> dict:
         options.append({"id": "best", "kind": "video", "format": "MP4", "quality": "Best quality", "size": None})
     if settings.allow_audio and FFMPEG and any(_has_audio(f) for f in formats):
         options.append({"id": "audio", "kind": "audio", "format": "MP3", "quality": "Audio only", "size": None})
+    return options, sound_only
 
-    title = (info.get("title") or info.get("description") or "").strip()
-    title = re.sub(r"\s+", " ", title)
+
+def _title(info: dict) -> str:
+    title = re.sub(r"\s+", " ", (info.get("title") or info.get("description") or "").strip())
     if len(title) > 120:
         title = title[:117].rstrip() + "…"
-    uploader = info.get("uploader") or info.get("channel") or info.get("uploader_id")
+    return title
+
+
+def _uploader(info: dict) -> Optional[str]:
+    return info.get("uploader") or info.get("channel") or info.get("uploader_id")
+
+
+def summarize(info: dict, platform: Platform, url: str) -> dict:
+    """Turn a yt-dlp info dict into what the website needs: the first video of the post."""
+    info = _single_entry(info)
+    options, sound_only = _media_options(info)
+    duration = info.get("duration")
     return {
         "platform": platform.key,
         "platform_name": platform.name,
         "url": url,
-        "title": title or f"{platform.name} {'audio' if sound_only else 'video'}",
-        "uploader": uploader,
+        "title": _title(info) or f"{platform.name} {'audio' if sound_only else 'video'}",
+        "uploader": _uploader(info),
         "duration": int(duration) if duration else None,
         "thumbnail": info.get("thumbnail"),
         "options": options,
     }
 
 
-def fetch_info(raw: str, *, peek: Optional[Peek] = None, ydl_factory: YdlFactory = yt_dlp.YoutubeDL) -> dict:
-    """Look up a video without downloading it."""
+# --------------------------------------------------------------------------
+# Every video and photo in a post (used by the Android app)
+# --------------------------------------------------------------------------
+def _int(value) -> Optional[int]:
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _image_of(info: dict) -> tuple[Optional[dict], Optional[str]]:
+    """The full-size picture of a photo post, and a smaller copy of it for previews."""
+    pictures = [t for t in (info.get("thumbnails") or []) if isinstance(t, dict) and t.get("url")]
+    if not pictures and info.get("thumbnail"):
+        pictures = [{"url": info["thumbnail"]}]
+    if not pictures:
+        return None, None
+    sized = [dict(t, width=_int(t.get("width")), height=_int(t.get("height"))) for t in pictures]
+    sized = [t for t in sized if t["width"] and t["height"]]
+    # Without sizes, yt-dlp lists pictures from worst to best
+    best = max(sized, key=lambda t: t["width"] * t["height"]) if sized else pictures[-1]
+    previews = sorted((t for t in sized if t["width"] >= 320), key=lambda t: t["width"])
+    return best, (previews[0]["url"] if previews else best["url"])
+
+
+def _photo_option(image: dict) -> dict:
+    ext = os.path.splitext(urlsplit(image["url"]).path)[1].lower().lstrip(".")
+    fmt = {"jpeg": "JPG", "jpg": "JPG", "png": "PNG", "webp": "WEBP", "gif": "GIF", "heic": "HEIC"}.get(ext, "JPG")
+    w, h = _int(image.get("width")), _int(image.get("height"))
+    return {"id": "photo", "kind": "photo", "format": fmt, "quality": f"{w} × {h}" if w and h else "Original", "size": None}
+
+
+def _photo_item(index: int, image: dict, preview: Optional[str]) -> dict:
+    return {
+        "index": index, "kind": "photo", "thumbnail": preview or image["url"], "duration": None,
+        "width": _int(image.get("width")), "height": _int(image.get("height")),
+        "options": [_photo_option(image)],
+        "_image": image["url"],  # removed before the answer goes out; used to download the photo
+    }
+
+
+def _summarize_item(entry: dict, platform: Platform, index: int) -> Optional[dict]:
+    try:
+        options, sound_only = _media_options(entry)
+    except VideoUnavailable:
+        options, sound_only = None, False
+    if options:
+        duration = entry.get("duration")
+        return {
+            "index": index, "kind": "audio" if sound_only else "video", "thumbnail": entry.get("thumbnail"),
+            "duration": int(duration) if duration else None, "options": options,
+        }
+    if platform.key in PHOTO_PLATFORMS:
+        image, preview = _image_of(entry)
+        if image:
+            return _photo_item(index, image, preview)
+    return None
+
+
+def summarize_items(info: dict, platform: Platform, url: str, extra_photos: tuple = ()) -> dict:
+    """Like summarize, plus "items": every video and photo in the post, each with its own choices."""
+    is_list = info.get("_type") in ("playlist", "multi_video")
+    entries = [e for e in (info.get("entries") or []) if e] if is_list else [info]
+    items: list[dict] = []
+    first_error: Optional[GrabblyError] = None
+    for position, entry in enumerate(entries, 1):
+        try:
+            item = _summarize_item(entry, platform, _int(entry.get("playlist_index")) or position)
+        except GrabblyError as e:  # e.g. one video in the post is too long: offer the others
+            first_error = first_error or e
+            continue
+        if item:
+            items.append(item)
+    for number, photo in enumerate(extra_photos, 1):
+        items.append(_photo_item(X_PHOTO_INDEX + number, photo, photo.get("preview")))
+    if not items:
+        raise first_error or VideoUnavailable("There's no video or photo to download in that post.")
+    items = items[:MAX_ITEMS]
+
+    main = entries[0] if len(entries) == 1 else info
+    caption = (info.get("description") or main.get("description") or "").strip() or None
+    if caption and len(caption) > CAPTION_LIMIT:
+        caption = caption[:CAPTION_LIMIT].rstrip() + "…"
+    first = items[0]
+    if first["kind"] == "photo":
+        kind = "photos" if len(items) > 1 else "photo"
+    else:
+        kind = "post" if len(items) > 1 else ("audio" if first["kind"] == "audio" else "video")
+    return {
+        "platform": platform.key,
+        "platform_name": platform.name,
+        "url": url,
+        "title": _title(main) or _title(info) or f"{platform.name} {kind}",
+        "uploader": _uploader(main) or _uploader(info),
+        "duration": first["duration"],
+        "thumbnail": first["thumbnail"],
+        "options": first["options"],
+        "caption": caption,
+        "items": items,
+    }
+
+
+_TWEET_ID = re.compile(r"/status(?:es)?/(\d+)")
+
+
+def x_photos(url: str) -> tuple[list[dict], Optional[str]]:
+    """Photos in a post on X, and its text. yt-dlp only reports videos, so ask X's public
+    embed endpoint (the one yt-dlp itself falls back to). Returns ([], None) when it can't."""
+    match = _TWEET_ID.search(urlsplit(url).path)
+    if not match or js_number_to_string is None:
+        return [], None
+    tweet_id = match.group(1)
+    token = js_number_to_string((int(tweet_id) / 1e15) * math.pi, 36).translate(str.maketrans(dict.fromkeys("0.")))
+    try:
+        with httpx.Client(timeout=10, follow_redirects=False, headers={"User-Agent": "Googlebot"}) as client:
+            resp = client.get("https://cdn.syndication.twimg.com/tweet-result", params={"id": tweet_id, "token": token})
+        data = resp.json() if resp.status_code == 200 else {}
+    except (httpx.HTTPError, ValueError):
+        return [], None
+    photos = []
+    for detail in data.get("mediaDetails") or []:
+        if not isinstance(detail, dict) or detail.get("type") != "photo":
+            continue
+        base = detail.get("media_url_https")
+        if not base:
+            continue
+        size = detail.get("original_info") or {}
+        photos.append({"url": f"{base}?name=orig", "preview": f"{base}?name=small",
+                       "width": _int(size.get("width")), "height": _int(size.get("height"))})
+    return photos, (data.get("text") or None)
+
+
+def _lookup_items(url: str, platform: Platform, ydl_factory: YdlFactory) -> dict:
+    """Looks up every video and photo in a post (with private "_image" links still in it)."""
+    opts = _ydl_opts(platform, playlist_items=f"1:{MAX_ITEMS}", ignore_no_formats_error=True)
+
+    def look_up() -> dict:
+        with ydl_factory(opts) as ydl:
+            return ydl.sanitize_info(ydl.extract_info(url, download=False))
+
+    photos, text = [], None
+    try:
+        info = _retry_once(look_up)
+    except DownloadError as e:
+        if platform.key == "x":  # a post with only photos: yt-dlp finds nothing, X's embed does
+            photos, text = x_photos(url)
+        if not photos:
+            log.info("info failed for %s: %s", url, e)
+            raise VideoUnavailable(friendly_error(str(e))) from None
+        info = {"_type": "playlist", "entries": []}
+    else:
+        if platform.key == "x":
+            photos, text = x_photos(url)
+    if text and not info.get("description"):
+        info = dict(info, description=text)
+    return summarize_items(info, platform, url, tuple(photos))
+
+
+def fetch_info(
+    raw: str,
+    *,
+    items: bool = False,
+    peek: Optional[Peek] = None,
+    ydl_factory: YdlFactory = yt_dlp.YoutubeDL,
+) -> dict:
+    """Look up a video without downloading it. With items=True, also every video and photo in the post."""
     url, platform = resolve(extract_url(raw), peek)
+    if items:
+        summary = _lookup_items(url, platform, ydl_factory)
+        for item in summary["items"]:
+            item.pop("_image", None)
+        return summary
+
     def look_up() -> dict:
         with ydl_factory(_ydl_opts(platform)) as ydl:
             return ydl.sanitize_info(ydl.extract_info(url, download=False))
@@ -500,20 +696,73 @@ def cleanup_stale(max_age: int = 3600) -> int:
     return removed
 
 
+def fetch_image(image_url: str, folder: Path) -> tuple[Path, str]:
+    """Saves a photo from a platform's image servers into folder. Returns its path and type."""
+    parts = urlsplit(image_url)
+    host = (parts.hostname or "").lower()
+    if parts.scheme != "https" or not any(host == h or host.endswith("." + h) for h in IMAGE_HOSTS):
+        raise VideoUnavailable("We couldn't get this photo.")
+    try:
+        with httpx.Client(timeout=20, follow_redirects=False, headers={"User-Agent": USER_AGENT}) as client:
+            with client.stream("GET", image_url) as resp:
+                ctype = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                if resp.status_code != 200 or not ctype.startswith("image/"):
+                    raise VideoUnavailable("We couldn't get this photo. It may have been removed.")
+                path = folder / f"photo{IMAGE_TYPES.get(ctype, '.jpg')}"
+                size = 0
+                with path.open("wb") as out:
+                    for chunk in resp.iter_bytes():
+                        size += len(chunk)
+                        if size > settings.max_bytes:
+                            raise TooLarge("This photo is too large to download.")
+                        out.write(chunk)
+    except httpx.HTTPError:
+        raise VideoUnavailable("We couldn't get this photo. Check your connection and try again.") from None
+    return path, ctype
+
+
+def _download_photo(url: str, platform: Platform, index: int, ydl_factory: YdlFactory) -> Download:
+    summary = _lookup_items(url, platform, ydl_factory)
+    items = summary["items"]
+    position, chosen = next(((n, i) for n, i in enumerate(items, 1) if i["index"] == index and i["kind"] == "photo"),
+                            (0, None))
+    if chosen is None:
+        raise VideoUnavailable("We couldn't find that photo in the post. Look the link up again.")
+    tmp = Path(tempfile.mkdtemp(prefix="dl-", dir=ensure_tmp_root()))
+    try:
+        path, media_type = fetch_image(chosen["_image"], tmp)
+        title = summary["title"] + (f" {position}" if len(items) > 1 else "")
+        return Download(
+            path=path,
+            filename=safe_filename(title, path.suffix, fallback=f"{platform.name} photo"),
+            media_type=media_type,
+            tmpdir=tmp,
+        )
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+
+
 def download(
     raw: str,
     option: str = "best",
     *,
+    item: Optional[int] = None,
     peek: Optional[Peek] = None,
     ydl_factory: YdlFactory = yt_dlp.YoutubeDL,
 ) -> Download:
-    """Download a video to a temporary folder. The caller must call .cleanup()."""
+    """Download a video (or with option "photo", a photo) to a temporary folder. The caller must
+    call .cleanup(). item picks one video or photo of a post with several (numbered from 1)."""
     if not OPTION_RE.fullmatch(option or ""):
         raise InvalidLink("Unknown download option.")
     if option == "audio" and not (settings.allow_audio and FFMPEG):
         raise InvalidLink("Audio downloads aren't available.")
+    if item is not None and not 1 <= item <= X_PHOTO_INDEX + MAX_ITEMS:
+        raise InvalidLink("Unknown item.")
 
     url, platform = resolve(extract_url(raw), peek)
+    if option == "photo":
+        return _download_photo(url, platform, item or 1, ydl_factory)
 
     tmp = Path(tempfile.mkdtemp(prefix="dl-", dir=ensure_tmp_root()))
     try:
@@ -522,6 +771,7 @@ def download(
             outtmpl=str(tmp / "media.%(ext)s"),
             max_filesize=settings.max_bytes,
             **format_opts(option),
+            **({"playlist_items": str(item)} if item else {}),
         )
 
         def fetch() -> dict:

@@ -33,6 +33,15 @@ SAMPLES = {
 }
 
 
+# Posts with photos, looked up the way the app does ("items"). Well-known public posts; any may
+# disappear, so a failure here means "check by hand", not necessarily a bug.
+PHOTO_SAMPLES = {
+    "Instagram": ["https://www.instagram.com/p/BsOGulcndj-/"],
+    "X": ["https://twitter.com/BarackObama/status/266031293945503744",
+          "https://twitter.com/TheEllenShow/status/440322224407314432"],
+}
+
+
 def request(method, path, body=None, read_limit=None, timeout=310):
     url = path if path.startswith("http") else BASE + path
     data = json.dumps(body).encode() if body is not None else None
@@ -103,6 +112,32 @@ def main():
                          f"length={h.get('Content-Length')} got={size} bytes in {t:.1f}s "
                          f"name={h.get('Content-Disposition')}" + ("" if ok else f" body={head[:200]!r}"))
             break  # one working link per platform is enough
+
+    check_photos()
+
+
+def check_photos():
+    for platform, links in PHOTO_SAMPLES.items():
+        for link in links:
+            status, _, body, _, t = request("POST", "/api/info", {"url": link, "items": True})
+            try:
+                data = json.loads(body)
+            except ValueError:
+                data = {"error": body[:120].decode(errors="replace")}
+            if status != 200:
+                line(False, f"{platform} photo post {status} in {t:.1f}s: {data.get('error')}  ({link})")
+                continue
+            kinds = [i["kind"] for i in data.get("items", [])]
+            caption = (data.get("caption") or "")[:40]
+            line(bool(kinds), f"{platform} photo post in {t:.1f}s: items={kinds} caption={caption!r}")
+            photo = next((i for i in data.get("items", []) if i["kind"] == "photo"), None)
+            if photo:
+                query = urllib.parse.urlencode({"url": data["url"], "option": "photo", "item": photo["index"]})
+                s, h, head, size, t = request("GET", f"/api/download?{query}", read_limit=16)
+                ok = s == 200 and h.get("Content-Type", "").startswith("image/") and size > 1_000
+                line(ok, f"{platform} photo download: {s} {h.get('Content-Type')} {size} bytes in {t:.1f}s "
+                         f"name={h.get('Content-Disposition')}" + ("" if ok else f" body={head[:200]!r}"))
+                break
 
 
 if __name__ == "__main__":

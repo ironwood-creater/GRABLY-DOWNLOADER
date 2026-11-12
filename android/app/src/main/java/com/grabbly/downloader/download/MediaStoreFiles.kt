@@ -9,7 +9,7 @@ import java.io.IOException
 
 /**
  * Saves downloads where the phone's Gallery and music apps find them:
- * videos in Movies/Grabbly, audio in Music/Grabbly, anything else in Download/Grabbly.
+ * videos in Movies/Grabbly, photos in Pictures/Grabbly, audio in Music/Grabbly, anything else in Download/Grabbly.
  * No storage permission is needed for files the app creates itself (Android 10+).
  */
 object MediaStoreFiles {
@@ -19,6 +19,8 @@ object MediaStoreFiles {
         val (collection, folder) = when {
             mimeType.startsWith("video/") ->
                 MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) to Environment.DIRECTORY_MOVIES
+            mimeType.startsWith("image/") ->
+                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) to Environment.DIRECTORY_PICTURES
             mimeType.startsWith("audio/") ->
                 MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) to Environment.DIRECTORY_MUSIC
             else ->

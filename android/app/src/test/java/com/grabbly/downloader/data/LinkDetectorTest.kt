@@ -91,4 +91,30 @@ class LinkDetectorTest {
             assertEquals(text.take(60), LinkCheck.Invalid, LinkDetector.check(text))
         }
     }
+
+    @Test
+    fun findsSeveralLinksInPastedText() {
+        val text = """
+            https://www.tiktok.com/@ava/video/1
+            Look at this one: https://www.instagram.com/reel/Cx/ and https://youtube.com/watch?v=1
+            https://www.tiktok.com/@ava/video/1
+            not a link
+            x.com/a/status/2
+        """.trimIndent()
+        val found = LinkDetector.findAll(text)
+        assertEquals(
+            listOf("https://www.tiktok.com/@ava/video/1", "https://www.instagram.com/reel/Cx/", "https://x.com/a/status/2"),
+            found.supported.map { it.url },
+        )
+        assertEquals(1, found.unsupported)
+        assertEquals(false, found.tooMany)
+    }
+
+    @Test
+    fun aLongListIsCut() {
+        val text = (1..40).joinToString("\n") { "https://www.tiktok.com/@ava/video/$it" }
+        val found = LinkDetector.findAll(text)
+        assertEquals(LinkDetector.MAX_LINKS, found.supported.size)
+        assertTrue(found.tooMany)
+    }
 }

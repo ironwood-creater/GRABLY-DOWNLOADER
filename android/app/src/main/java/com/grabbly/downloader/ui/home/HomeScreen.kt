@@ -84,10 +84,17 @@ import com.grabbly.downloader.util.SystemActions
 import kotlinx.coroutines.flow.filter
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onOpenDownloads: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenBatch: () -> Unit,
+    onOpenPlayer: (Long) -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val latest by viewModel.latestDownload.collectAsStateWithLifecycle()
     val activeCount by viewModel.activeCount.collectAsStateWithLifecycle()
+    val quality by viewModel.quality.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val snackbar = remember { SnackbarHostState() }
@@ -107,7 +114,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
                         notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     val result = snackbar.showSnackbar(
-                        message = "Downloading “${event.title}”",
+                        message = if (event.count > 1) "Downloading ${event.count} files from “${event.title}”" else "Downloading “${event.title}”",
                         actionLabel = "View",
                         duration = SnackbarDuration.Short,
                     )
@@ -144,7 +151,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
         ) {
-            Header(activeCount = activeCount, onOpenDownloads = onOpenDownloads)
+            Header(activeCount = activeCount, onOpenDownloads = onOpenDownloads, onOpenSettings = onOpenSettings)
             Spacer(Modifier.height(22.dp))
             Text(
                 "Download any video",
@@ -171,7 +178,13 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             StatusLine(state)
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = onOpenBatch) {
+                Icon(GrabblyIcons.Batch, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Paste several links")
+            }
+            Spacer(Modifier.height(16.dp))
             SectionTitle("Copy a link from")
             Spacer(Modifier.height(12.dp))
             PlatformRow(onOpen = { SystemActions.openPlatform(context, it) })
@@ -187,7 +200,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
                         Spacer(Modifier.height(8.dp))
                         RecentCard(
                             item = item,
-                            onPlay = { SystemActions.play(context, item) },
+                            onPlay = { onOpenPlayer(item.id) },
                             onShare = { SystemActions.share(context, item) },
                         )
                     }
@@ -201,16 +214,25 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
     }
 
     state.video?.let { video ->
-        VideoSheet(
-            video = video,
-            onDismiss = viewModel::dismissVideo,
-            onDownload = viewModel::download,
-        )
+        if (video.hasSeveral) {
+            PostSheet(
+                video = video,
+                quality = quality,
+                onDismiss = viewModel::dismissVideo,
+                onDownload = viewModel::downloadItems,
+            )
+        } else {
+            VideoSheet(
+                video = video,
+                onDismiss = viewModel::dismissVideo,
+                onDownload = viewModel::download,
+            )
+        }
     }
 }
 
 @Composable
-private fun Header(activeCount: Int, onOpenDownloads: () -> Unit) {
+private fun Header(activeCount: Int, onOpenDownloads: () -> Unit, onOpenSettings: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -225,6 +247,10 @@ private fun Header(activeCount: Int, onOpenDownloads: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onOpenSettings) {
+            Icon(GrabblyIcons.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(4.dp))
         FilledTonalIconButton(
             onClick = onOpenDownloads,
             colors = IconButtonDefaults.filledTonalIconButtonColors(
@@ -419,9 +445,9 @@ private fun RecentCard(item: DownloadEntity, onPlay: () -> Unit, onShare: () -> 
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Thumbnail(
-                url = item.thumbnailUrl,
+                url = if (item.isPhoto) item.contentUri ?: item.thumbnailUrl else item.thumbnailUrl,
                 isAudio = item.isAudio,
-                showPlay = true,
+                showPlay = !item.isPhoto,
                 modifier = Modifier.size(width = 72.dp, height = 92.dp),
             )
             Spacer(Modifier.width(14.dp))

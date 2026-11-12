@@ -12,13 +12,16 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
-/** An error with a message that can be shown to the user as-is. */
-class ApiException(message: String) : Exception(message)
+/** An error with a message that can be shown to the user as-is. [code] is the HTTP status, if any. */
+class ApiException(message: String, val code: Int = 0) : Exception(message) {
+    /** The server asked to slow down (too many requests, or busy): worth trying again shortly */
+    val isBusy: Boolean get() = code == 429 || code == 503
+}
 
 /**
  * Talks to the Grabbly server, the same one the website uses:
- *  - POST /api/info      → video title, thumbnail and quality options
- *  - GET  /api/download  → the video file
+ *  - POST /api/info      → title, thumbnail, caption, and every video and photo in the post
+ *  - GET  /api/download  → the file
  */
 class GrabblyApi(baseUrl: String, private val client: OkHttpClient) {
     private val base = baseUrl.trim().trimEnd('/')
@@ -33,7 +36,7 @@ class GrabblyApi(baseUrl: String, private val client: OkHttpClient) {
     /** Looks up a video. Throws [ApiException] with a friendly message on any failure. */
     suspend fun info(link: String): VideoInfo = withContext(Dispatchers.IO) {
         ensureConfigured()
-        val payload = json.encodeToString(InfoRequest.serializer(), InfoRequest(link))
+        val payload = json.encodeToString(InfoRequest.serializer(), InfoRequest(link, items = true))
         val request = Request.Builder()
             .url("$base/api/info")
             .post(payload.toRequestBody(JSON_MEDIA_TYPE))
@@ -45,7 +48,7 @@ class GrabblyApi(baseUrl: String, private val client: OkHttpClient) {
         } catch (e: IOException) {
             throw ApiException(NETWORK_ERROR)
         }
-        if (code !in 200..299) throw ApiException(errorMessage(code, text))
+        if (code !in 200..299) throw ApiException(errorMessage(code, text), code)
         val info = try {
             json.decodeFromString(VideoInfo.serializer(), text)
         } catch (e: SerializationException) {
@@ -53,15 +56,19 @@ class GrabblyApi(baseUrl: String, private val client: OkHttpClient) {
         } catch (e: IllegalArgumentException) {
             throw ApiException(GENERIC_ERROR)
         }
-        info.copy(thumbnail = info.thumbnail?.let(::absoluteUrl))
+        info.copy(
+            thumbnail = info.thumbnail?.let(::absoluteUrl),
+            items = info.items.map { it.copy(thumbnail = it.thumbnail?.let(::absoluteUrl)) },
+        )
     }
 
-    /** Address that streams the chosen file. */
-    fun downloadUrl(link: String, optionId: String): HttpUrl {
+    /** Address that streams the chosen file; [item] picks one video or photo of a post with several. */
+    fun downloadUrl(link: String, optionId: String, item: Int? = null): HttpUrl {
         ensureConfigured()
         return "$base/api/download".toHttpUrl().newBuilder()
             .addQueryParameter("url", link)
             .addQueryParameter("option", optionId)
+            .apply { if (item != null) addQueryParameter("item", item.toString()) }
             .build()
     }
 

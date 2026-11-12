@@ -34,10 +34,16 @@ HOW IT WORKS
 • Copy a link in your favorite app, or tap Share and pick Grabbly
 • Grabbly finds the video and shows the qualities available
 • Choose MP4 in up to 1080p, or save just the sound as MP3
+• Save photos and whole albums from Instagram, Pinterest and X
+• Paste several links at once and Grabbly downloads them one after another
 • Find everything in Downloads, or in your phone's Gallery
 
 WHY GRABBLY
 • Free, with no account and no sign-up
+• Built-in player: watch videos and view photos right in the app
+• Private folder: hide downloads from your gallery, opened with your fingerprint or phone PIN
+• Copy a post's caption and hashtags in one tap
+• Set your favorite quality once, or download copied links automatically
 • Downloads keep going in the background, with a progress notification
 • Saved straight to Movies/Grabbly (videos) and Music/Grabbly (sound)
 • Your download list stays on your phone
@@ -123,6 +129,7 @@ the app and pulling down the notification shade to show the progress notificatio
 | Notifications | Download progress and "saved" messages (asked on the first download) |
 | Foreground service (data sync) | Keep a download going in the background |
 | Wake lock, run at startup | Added by Android's WorkManager library, so queued downloads resume after a restart |
+| Biometric (fingerprint or face) | Opens the private folder with the phone's own screen lock; Grabbly never sees it |
 
 No storage, camera, location, contacts or "all apps" permissions.
 

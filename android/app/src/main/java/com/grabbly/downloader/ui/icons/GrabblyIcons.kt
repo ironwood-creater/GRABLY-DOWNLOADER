@@ -29,6 +29,20 @@ object GrabblyIcons {
     val Inbox: ImageVector by lazy { stroke("Inbox", "M22 12h-6l-2 3h-4l-2-3H2", "M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z") }
     val Play: ImageVector by lazy { fill("Play", "M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z") }
     val More: ImageVector by lazy { fill("More", "M13.8 5a1.8 1.8 0 1 1-3.6 0a1.8 1.8 0 1 1 3.6 0z", "M13.8 12a1.8 1.8 0 1 1-3.6 0a1.8 1.8 0 1 1 3.6 0z", "M13.8 19a1.8 1.8 0 1 1-3.6 0a1.8 1.8 0 1 1 3.6 0z") }
+    val Pause: ImageVector by lazy { fill("Pause", "M7 5h2.5a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M14.5 5H17a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z") }
+    val Settings: ImageVector by lazy {
+        stroke(
+            "Settings",
+            "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0z",
+            "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
+        )
+    }
+    val Lock: ImageVector by lazy { stroke("Lock", "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z", "M7 11V7a5 5 0 0 1 10 0v4") }
+    val Image: ImageVector by lazy { stroke("Image", "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "M10 8.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 1 1 3 0z", "M21 15l-5-5L5 21") }
+    val Copy: ImageVector by lazy { stroke("Copy", "M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z", "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1") }
+    val Hash: ImageVector by lazy { stroke("Hash", "M4 9h16", "M4 15h16", "M10 3L8 21", "M16 3l-2 18") }
+    val Layers: ImageVector by lazy { stroke("Layers", "M12 2L2 7l10 5 10-5-10-5z", "M2 17l10 5 10-5", "M2 12l10 5 10-5") }
+    val Batch: ImageVector by lazy { stroke("Batch", "M8 6h13", "M8 12h13", "M8 18h13", "M3 6h.01", "M3 12h.01", "M3 18h.01") }
 
     /** The Grabbly "G", in 512-unit artwork like the website logo */
     val LogoG: ImageVector by lazy { stroke("LogoG", "M347 154.9A136 136 0 1 0 392 256H277", width = 66f, viewport = 512f) }

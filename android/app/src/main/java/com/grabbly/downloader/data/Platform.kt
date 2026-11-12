@@ -34,6 +34,9 @@ sealed interface LinkCheck {
     data class Supported(val url: String, val platform: Platform) : LinkCheck
 }
 
+/** Links found in pasted text: the supported ones (each once, at most [LinkDetector.MAX_LINKS]) and how many others. */
+data class FoundLinks(val supported: List<LinkCheck.Supported>, val unsupported: Int, val tooMany: Boolean)
+
 /**
  * Finds a supported video link in pasted or shared text, such as "Look at this! https://vm.tiktok.com/…".
  * Uses the same allowlist as the server (server/downloader.py) and the website.
@@ -54,6 +57,23 @@ object LinkDetector {
     )
 
     private const val MAX_LENGTH = 2048
+
+    /** Most links downloaded in one go (the server allows 30 look-ups a minute). */
+    const val MAX_LINKS = 30
+
+    /** Every link in [text], for example several pasted one per line. */
+    fun findAll(text: String): FoundLinks {
+        val supported = LinkedHashMap<String, LinkCheck.Supported>()
+        var unsupported = 0
+        for (match in urlInText.findAll(text)) {
+            when (val found = check(match.value)) {
+                is LinkCheck.Supported -> if (found.url !in supported) supported[found.url] = found
+                is LinkCheck.Unsupported -> unsupported++
+                else -> Unit
+            }
+        }
+        return FoundLinks(supported.values.take(MAX_LINKS), unsupported, supported.size > MAX_LINKS)
+    }
 
     fun check(text: String): LinkCheck {
         val trimmed = text.trim()
