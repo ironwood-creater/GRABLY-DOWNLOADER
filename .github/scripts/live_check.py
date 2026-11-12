@@ -10,6 +10,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://grabbly-downloader-server.vercel.app").rstrip("/")
 UA = {"User-Agent": "Grabbly-live-check/1.0"}
@@ -70,6 +71,13 @@ def main():
     line(status == 200, f"privacy page {status}")
     status, _, body, _, t = request("GET", "/api/health")
     line(status == 200, f"health {status} {body.decode(errors='replace')} in {t:.1f}s")
+
+    # Test builds of the Android app in public/download: served whole, as an Android package
+    for apk in sorted((Path(__file__).resolve().parents[2] / "public" / "download").glob("*.apk")):
+        s, h, head, size, t = request("GET", "/download/" + urllib.parse.quote(apk.name), read_limit=4)
+        ok = s == 200 and size == apk.stat().st_size and head == b"PK\x03\x04" \
+            and "android.package-archive" in h.get("Content-Type", "")
+        line(ok, f"app download {apk.name}: {s} {h.get('Content-Type')} {size} of {apk.stat().st_size} bytes in {t:.1f}s")
 
     for platform, links in SAMPLES.items():
         for link in links:
