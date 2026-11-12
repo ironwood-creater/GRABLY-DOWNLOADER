@@ -1,4 +1,4 @@
-# Grably on Vercel: the website (public/, served by Vercel's CDN) and the download API
+# Grabbly on Vercel: the website (public/, served by Vercel's CDN) and the download API
 # (server/app.py, a FastAPI app that runs as a Vercel Function).
 [project]
 name = "grably"

@@ -1,5 +1,5 @@
 /**
- * Grably on Cloudflare.
+ * Grabbly on Cloudflare.
  *
  * - The website (public/) is served as static assets from Cloudflare's network, so pages load
  *   instantly even while the download server is asleep.
@@ -85,7 +85,7 @@ async function toDownloadServer(request: Request, env: Env): Promise<Response> {
 		return await server.fetch(new Request(request, { headers }));
 	} catch (err) {
 		console.error("download server unavailable", err);
-		return Response.json({ error: "Grably is starting up. Please try again in a few seconds." }, { status: 503 });
+		return Response.json({ error: "Grabbly is starting up. Please try again in a few seconds." }, { status: 503 });
 	}
 }
 

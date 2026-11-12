@@ -135,7 +135,7 @@ def feature_graphic(home: Path, downloads: Path) -> Image.Image:
     icon = rounded(Image.open(GRAPHICS / "icon-512.png").convert("RGB").resize((104, 104), Image.LANCZOS), 26)
     shadow(canvas, icon, (64, 112), blur=16, alpha=120)
     draw = ImageDraw.Draw(canvas)
-    draw.text((188, 164), "Grably", font=font("outfit_bold", 84), fill=WHITE, anchor="lm")
+    draw.text((188, 164), "Grabbly", font=font("outfit_bold", 84), fill=WHITE, anchor="lm")
     tagline = font("outfit_semibold", 36)
     draw.text((66, 268), "Save videos to your phone", font=tagline, fill=TEAL_LIGHT, anchor="ls")
     draw.text((66, 314), "in a couple of taps.", font=tagline, fill=TEAL_LIGHT, anchor="ls")

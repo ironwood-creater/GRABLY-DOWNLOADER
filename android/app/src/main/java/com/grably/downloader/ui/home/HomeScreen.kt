@@ -117,7 +117,7 @@ fun HomeScreen(viewModel: HomeViewModel, onOpenDownloads: () -> Unit) {
         }
     }
 
-    // Pick up a link the user just copied in TikTok, Instagram… when they come back to Grably.
+    // Pick up a link the user just copied in TikTok, Instagram… when they come back to Grabbly.
     // Android only lets apps read the clipboard while they're in front, so check when the window gets focus.
     val windowInfo = LocalWindowInfo.current
     LaunchedEffect(windowInfo, viewModel) {
@@ -220,7 +220,7 @@ private fun Header(activeCount: Int, onOpenDownloads: () -> Unit) {
         GrablyMark(size = 38.dp)
         Spacer(Modifier.width(10.dp))
         Text(
-            "Grably",
+            "Grabbly",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
@@ -472,10 +472,10 @@ private fun ShareTip() {
             }
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("Even quicker: share to Grably", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Text("Even quicker: share to Grabbly", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "In TikTok, Instagram or X, tap Share, then pick Grably. The video opens here, ready to download.",
+                    "In TikTok, Instagram or X, tap Share, then pick Grabbly. The video opens here, ready to download.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.grably.muted,
                 )

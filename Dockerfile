@@ -1,4 +1,4 @@
-# Grably website + download server
+# Grabbly website + download server
 FROM python:3.12-slim
 
 # ffmpeg merges separate video/audio streams and converts audio to MP3

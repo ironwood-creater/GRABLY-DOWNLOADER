@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
 
-    /** A link shared to Grably from another app (Share → Grably) */
+    /** A link shared to Grabbly from another app (Share → Grabbly) */
     private val sharedText = MutableStateFlow<String?>(null)
 
     /** Set when a download notification is tapped */

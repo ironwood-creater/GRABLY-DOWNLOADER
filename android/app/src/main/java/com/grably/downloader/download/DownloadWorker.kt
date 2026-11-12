@@ -21,7 +21,7 @@ import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Downloads one video from the Grably server into the phone's gallery, with a progress
+ * Downloads one video from the Grabbly server into the phone's gallery, with a progress
  * notification. Runs in the background and keeps going if the user leaves the app.
  */
 class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {

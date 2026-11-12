@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 /**
  * Runs the real app on a phone or emulator.
  *
- * [downloadsAVideo] needs a Grably server; CI starts a stand-in one (android/ci/fake_server.py)
+ * [downloadsAVideo] needs a Grabbly server; CI starts a stand-in one (android/ci/fake_server.py)
  * and builds the app with -Pgrably.apiBaseUrl=http://10.0.2.2:8000.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -70,7 +70,7 @@ class AppTest {
 
         typeLink("https://youtube.com/watch?v=1")
         compose.onNodeWithContentDescription("Find video").performClick()
-        compose.waitUntilExactlyOneExists(hasText("Grably doesn't support youtube.com yet", substring = true), 5_000)
+        compose.waitUntilExactlyOneExists(hasText("Grabbly doesn't support youtube.com yet", substring = true), 5_000)
 
         compose.onNodeWithContentDescription("Clear").performClick()
         typeLink("Look at this https://www.tiktok.com/@ava/video/7311")
@@ -99,14 +99,14 @@ class AppTest {
         compose.onNodeWithContentDescription("Find video").performClick()
 
         // Quality picker
-        compose.waitUntilExactlyOneExists(hasText("Grably test clip"), 15_000)
+        compose.waitUntilExactlyOneExists(hasText("Grabbly test clip"), 15_000)
         compose.onNodeWithText("MP4 · 720p").performClick()
 
         // Downloads list: wait for it to finish and land in the gallery
         compose.waitUntilExactlyOneExists(hasText("Download any video"), 5_000)
         compose.onNodeWithContentDescription("Downloads").performClick()
         compose.waitUntilExactlyOneExists(hasText("Saved"), 60_000)
-        compose.onNodeWithText("Grably test clip").assertExists()
+        compose.onNodeWithText("Grabbly test clip").assertExists()
 
         // Delete it again
         compose.onNodeWithContentDescription("More options").performClick()

@@ -16,7 +16,7 @@ import java.io.IOException
 class ApiException(message: String) : Exception(message)
 
 /**
- * Talks to the Grably server, the same one the website uses:
+ * Talks to the Grabbly server, the same one the website uses:
  *  - POST /api/info      → video title, thumbnail and quality options
  *  - GET  /api/download  → the video file
  */
@@ -82,7 +82,7 @@ class GrablyApi(baseUrl: String, private val client: OkHttpClient) {
         if (!fromServer.isNullOrBlank()) return fromServer
         return when (code) {
             429 -> "You're going a bit fast. Wait a minute and try again."
-            502, 503, 504 -> "Grably is starting up or busy. Please try again in a moment."
+            502, 503, 504 -> "Grabbly is starting up or busy. Please try again in a moment."
             else -> GENERIC_ERROR
         }
     }
@@ -93,8 +93,8 @@ class GrablyApi(baseUrl: String, private val client: OkHttpClient) {
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
-        const val NETWORK_ERROR = "Couldn't reach Grably. Check your connection and try again."
+        const val NETWORK_ERROR = "Couldn't reach Grabbly. Check your connection and try again."
         const val GENERIC_ERROR = "Something went wrong. Please try again."
-        const val NOT_CONFIGURED = "Grably's server address isn't set in this version of the app."
+        const val NOT_CONFIGURED = "Grabbly's server address isn't set in this version of the app."
     }
 }

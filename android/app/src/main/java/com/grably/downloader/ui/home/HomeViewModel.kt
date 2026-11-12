@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val input: String = "",
-    /** The platform of the link in the field, when it's one Grably supports */
+    /** The platform of the link in the field, when it's one Grabbly supports */
     val detected: Platform? = null,
     val message: String? = null,
     val isError: Boolean = false,
@@ -107,7 +107,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         lookup()
     }
 
-    /** A link shared to Grably from another app's Share menu. */
+    /** A link shared to Grabbly from another app's Share menu. */
     fun onShared(text: String) {
         lookupJob?.cancel()
         _state.update { it.copy(video = null, loading = false) }
@@ -127,7 +127,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             LinkCheck.Empty -> return fail("Paste a video link first.")
             LinkCheck.Invalid -> return fail("That doesn't look like a link. Copy the video's link and paste it here.")
             is LinkCheck.Unsupported -> return fail(
-                "Grably doesn't support ${check.host} yet. It works with ${Platform.allNames}.",
+                "Grabbly doesn't support ${check.host} yet. It works with ${Platform.allNames}.",
             )
             is LinkCheck.Supported -> check.url
         }

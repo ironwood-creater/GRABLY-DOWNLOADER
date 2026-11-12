@@ -97,7 +97,7 @@ class GrablyApiTest {
 
     @Test
     fun hasFriendlyDefaultsWhenTheServerSaysNothing() {
-        expectError("Grably is starting up or busy. Please try again in a moment.") {
+        expectError("Grabbly is starting up or busy. Please try again in a moment.") {
             api(FakeServer { 503 to "<html>Service Unavailable</html>" }).info("https://x.com/a/status/1")
         }
         expectError("You're going a bit fast. Wait a minute and try again.") {

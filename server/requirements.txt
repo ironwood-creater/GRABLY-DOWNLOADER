@@ -1,4 +1,4 @@
-# Grably web server. Keep in sync with "dependencies" in pyproject.toml (used by Vercel);
+# Grabbly web server. Keep in sync with "dependencies" in pyproject.toml (used by Vercel);
 # server/tests/test_deploy.py checks that they match.
 fastapi==0.162.0
 uvicorn[standard]==0.54.0

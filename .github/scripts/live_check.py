@@ -1,4 +1,4 @@
-"""Checks a live Grably site: pages, the API, and real lookups and downloads on each platform.
+"""Checks a live Grabbly site: pages, the API, and real lookups and downloads on each platform.
 
     python .github/scripts/live_check.py https://grably-downloader-server.vercel.app
 
@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://grably-downloader-server.vercel.app").rstrip("/")
-UA = {"User-Agent": "Grably-live-check/1.0"}
+UA = {"User-Agent": "Grabbly-live-check/1.0"}
 
 # Public videos that yt-dlp itself uses in its tests
 SAMPLES = {

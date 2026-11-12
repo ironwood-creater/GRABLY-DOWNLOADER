@@ -9,7 +9,7 @@ import java.io.IOException
 
 /**
  * Saves downloads where the phone's Gallery and music apps find them:
- * videos in Movies/Grably, audio in Music/Grably, anything else in Download/Grably.
+ * videos in Movies/Grabbly, audio in Music/Grabbly, anything else in Download/Grabbly.
  * No storage permission is needed for files the app creates itself (Android 10+).
  */
 object MediaStoreFiles {
@@ -27,7 +27,7 @@ object MediaStoreFiles {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "$folder/Grably")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "$folder/Grabbly")
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
         return context.contentResolver.insert(collection, values)

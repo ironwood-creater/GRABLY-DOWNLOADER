@@ -2,7 +2,7 @@ package com.grably.downloader.util
 
 import java.net.URLDecoder
 
-/** Reads the file name from a Content-Disposition header, as sent by the Grably server. */
+/** Reads the file name from a Content-Disposition header, as sent by the Grabbly server. */
 object ContentDisposition {
     private val extended = Regex("""filename\*\s*=\s*utf-8''([^;]+)""", RegexOption.IGNORE_CASE)
     private val plain = Regex("""filename\s*=\s*"?([^";]+)"?""", RegexOption.IGNORE_CASE)
@@ -38,7 +38,7 @@ object FileNames {
 
     /** A file name from the video title when the server didn't send one. */
     fun fromTitle(title: String, mimeType: String): String {
-        val fallback = if (mimeType.startsWith("audio/")) "Grably audio" else "Grably video"
+        val fallback = if (mimeType.startsWith("audio/")) "Grabbly audio" else "Grabbly video"
         return clean(title, fallback) + "." + extensionFor(mimeType)
     }
 

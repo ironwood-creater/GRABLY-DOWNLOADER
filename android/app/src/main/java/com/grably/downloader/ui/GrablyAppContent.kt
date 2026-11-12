@@ -28,7 +28,7 @@ private object Routes {
 /**
  * The whole app: welcome screen (first run only), Home and Downloads.
  *
- * [sharedText] is a link shared to Grably from another app; [openDownloads] is set when
+ * [sharedText] is a link shared to Grabbly from another app; [openDownloads] is set when
  * a download notification was tapped. Both are cleared through their callbacks once handled.
  */
 @Composable

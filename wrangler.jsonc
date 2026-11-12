@@ -1,4 +1,4 @@
-// Grably on Cloudflare (see README → "Deploy to Cloudflare")
+// Grabbly on Cloudflare (see README → "Deploy to Cloudflare")
 //  - public/ is served as static assets from Cloudflare's network
 //  - cloudflare/worker.ts sends /api/* to a Container running the Python download server (./Dockerfile)
 {

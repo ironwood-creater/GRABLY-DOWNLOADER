@@ -1,4 +1,4 @@
-# Google Play store listing for Grably
+# Google Play store listing for Grabbly
 
 Everything Play Console asks for, ready to paste. Graphics are in this folder:
 
@@ -16,7 +16,7 @@ Play allows 2 to 8 phone screenshots, so all 8 fit.
 **App name** (30 characters max)
 
 ```
-Grably: Video Saver
+Grabbly: Video Saver
 ```
 
 **Short description** (80 characters max)
@@ -28,29 +28,29 @@ Save videos from your favorite apps to your phone. Free, fast and no sign-up.
 **Full description** (4,000 characters max)
 
 ```
-Grably saves videos to your phone in a couple of taps. Copy a video's link, open Grably, and pick the quality you want. The video lands in your gallery, ready to watch offline or share.
+Grabbly saves videos to your phone in a couple of taps. Copy a video's link, open Grabbly, and pick the quality you want. The video lands in your gallery, ready to watch offline or share.
 
 HOW IT WORKS
-• Copy a link in your favorite app, or tap Share and pick Grably
-• Grably finds the video and shows the qualities available
+• Copy a link in your favorite app, or tap Share and pick Grabbly
+• Grabbly finds the video and shows the qualities available
 • Choose MP4 in up to 1080p, or save just the sound as MP3
 • Find everything in Downloads, or in your phone's Gallery
 
 WHY GRABLY
 • Free, with no account and no sign-up
 • Downloads keep going in the background, with a progress notification
-• Saved straight to Movies/Grably (videos) and Music/Grably (sound)
+• Saved straight to Movies/Grabbly (videos) and Music/Grabbly (sound)
 • Your download list stays on your phone
 • Light and dark mode
 • No storage permission needed
 
 SUPPORTED LINKS
-Grably works with public video links from TikTok, Instagram, Facebook, X, Pinterest, Twitch (clips and past streams) and Tumblr.
+Grabbly works with public video links from TikTok, Instagram, Facebook, X, Pinterest, Twitch (clips and past streams) and Tumblr.
 
 PLEASE NOTE
 Only download videos you own or have permission to save, and respect the rights of creators. Private videos and videos that need a login can't be downloaded.
 
-Grably is an independent app and isn't affiliated with, endorsed by or sponsored by any of the sites it works with. All trademarks belong to their owners.
+Grabbly is an independent app and isn't affiliated with, endorsed by or sponsored by any of the sites it works with. All trademarks belong to their owners.
 ```
 
 **Screenshot captions** (already on the framed screenshots)
@@ -87,7 +87,7 @@ Grably is an independent app and isn't affiliated with, endorsed by or sponsored
 ### Data safety form
 
 The app has no analytics, no ads SDK and no account. What leaves the phone is the video link
-the user enters, sent to the Grably server to look up and download the video.
+the user enters, sent to the Grabbly server to look up and download the video.
 
 - Does your app collect or share any of the required user data types? **Yes**
 - Is all of the user data collected by your app encrypted in transit? **Yes** (HTTPS)
@@ -106,7 +106,7 @@ leaves the app. In **App content → Foreground service permissions**, pick *Dat
 describe it like this:
 
 ```
-When the user taps Download, the app downloads the chosen video file from the Grably server
+When the user taps Download, the app downloads the chosen video file from the Grabbly server
 and saves it to the phone's gallery. The download runs as a user-visible foreground service
 with a progress notification so it isn't interrupted if the user switches apps. It stops as
 soon as the file is saved.

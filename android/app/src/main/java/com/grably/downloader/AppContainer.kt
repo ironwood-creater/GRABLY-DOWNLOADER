@@ -17,7 +17,7 @@ class AppContainer(context: Context) {
         .addInterceptor { chain ->
             chain.proceed(
                 chain.request().newBuilder()
-                    .header("User-Agent", "Grably-Android/${BuildConfig.VERSION_NAME}")
+                    .header("User-Agent", "Grabbly-Android/${BuildConfig.VERSION_NAME}")
                     .build(),
             )
         }

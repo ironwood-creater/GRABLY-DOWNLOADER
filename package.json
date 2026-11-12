@@ -1,7 +1,7 @@
 {
   "name": "grably",
   "private": true,
-  "description": "Grably website on Cloudflare: Worker + static assets + a Container running the Python download server",
+  "description": "Grabbly website on Cloudflare: Worker + static assets + a Container running the Python download server",
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",

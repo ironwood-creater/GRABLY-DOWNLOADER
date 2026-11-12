@@ -1,9 +1,9 @@
-# Grably for Android
+# Grabbly for Android
 
-The Grably phone app: paste a TikTok, Instagram, Facebook, X or Pinterest link (or share it to
-Grably from that app) and the video is saved to the phone's gallery.
+The Grabbly phone app: paste a TikTok, Instagram, Facebook, X or Pinterest link (or share it to
+Grabbly from that app) and the video is saved to the phone's gallery.
 
-It uses the same Grably server as the website (`server/`, deployed on Cloudflare), so the server
+It uses the same Grabbly server as the website (`server/`, deployed on Cloudflare), so the server
 must be running and the app must know its address.
 
 ## What's inside
@@ -14,16 +14,16 @@ must be running and the app must know its address.
   (for example MP4 1080p, MP4 720p, MP3 sound only).
 - **Downloads**: All / Complete / Failed tabs grouped by day, with progress, play, share,
   try again, cancel and delete.
-- **Share to Grably**: in TikTok, Instagram, X and others, tap Share, then Grably.
+- **Share to Grabbly**: in TikTok, Instagram, X and others, tap Share, then Grabbly.
 - Downloads keep going in the background with a progress notification, and files are saved to
-  `Movies/Grably` (videos) or `Music/Grably` (sound). No storage permission is needed.
-- Light and dark mode in Grably's teal on navy, with the website's fonts (Outfit and Inter).
+  `Movies/Grabbly` (videos) or `Music/Grabbly` (sound). No storage permission is needed.
+- Light and dark mode in Grabbly's teal on navy, with the website's fonts (Outfit and Inter).
 
 Built with Kotlin and Jetpack Compose. Android 10 or newer.
 
 ## Server address
 
-The app talks to the live Grably site, https://grably-downloader-server.vercel.app, by default
+The app talks to the live Grabbly site, https://grably-downloader-server.vercel.app, by default
 (set in `app/build.gradle.kts`). To use another server:
 
 - **GitHub build**: in the repository go to Settings → Secrets and variables → Actions →

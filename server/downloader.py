@@ -194,7 +194,7 @@ def check_url(url: str) -> tuple[str, Platform]:
     platform = platform_for_host(host) if host else None
     if platform is None:
         raise UnsupportedSite(
-            f"Grably doesn't support {host or 'that site'} yet. It works with {SUPPORTED_NAMES}."
+            f"Grabbly doesn't support {host or 'that site'} yet. It works with {SUPPORTED_NAMES}."
         )
     clean = urlunsplit(("https", host, parts.path or "/", parts.query, ""))
     return clean, platform
@@ -288,9 +288,9 @@ def _ydl_opts(platform: Optional[Platform], **extra) -> dict:
 _FRIENDLY = (
     (("private",), "This video is private, so it can't be downloaded."),
     (("suspended",), "This account has been suspended, so its videos can't be downloaded."),
-    (("broadcasts/", "live event", "is live"), "Grably can't download live streams. Try again once it has ended and been saved."),
-    (("login", "log in", "sign in", "cookies", "authenticat"), "This video needs a login to view, so Grably can't download it."),
-    (("unsupported url",), "Grably can't download from that page. Paste a link to a single video."),
+    (("broadcasts/", "live event", "is live"), "Grabbly can't download live streams. Try again once it has ended and been saved."),
+    (("login", "log in", "sign in", "cookies", "authenticat"), "This video needs a login to view, so Grabbly can't download it."),
+    (("unsupported url",), "Grabbly can't download from that page. Paste a link to a single video."),
     (("no video", "no media", "no formats", "requested format is not available"), "There's no downloadable video in that post."),
     (("429", "rate-limit", "rate limit", "too many requests"), "That site is limiting requests right now. Try again in a minute."),
     (("not available", "unavailable", "404", "removed", "deleted", "does not exist"), "This video isn't available. It may have been removed."),
@@ -378,7 +378,7 @@ def summarize(info: dict, platform: Platform, url: str) -> dict:
         raise VideoUnavailable("There's no downloadable video in that post.")
     duration = info.get("duration")
     if duration and duration > settings.max_duration:
-        raise TooLarge(f"This video is too long. Grably downloads videos up to {settings.max_duration // 60} minutes.")
+        raise TooLarge(f"This video is too long. Grabbly downloads videos up to {settings.max_duration // 60} minutes.")
 
     best_audio = max(
         (f for f in formats if _has_audio(f) and not _has_video(f)),
@@ -529,7 +529,7 @@ def download(
                 found = _single_entry(ydl.extract_info(url, download=False))
                 duration = found.get("duration")
                 if duration and duration > settings.max_duration:
-                    raise TooLarge(f"This video is too long. Grably downloads videos up to {settings.max_duration // 60} minutes.")
+                    raise TooLarge(f"This video is too long. Grabbly downloads videos up to {settings.max_duration // 60} minutes.")
                 return ydl.process_ie_result(found, download=True)
 
         def empty_tmp() -> None:
@@ -544,10 +544,10 @@ def download(
         files = [p for p in tmp.iterdir() if p.is_file() and not p.name.endswith((".part", ".ytdl", ".temp"))]
         if not files:
             # yt-dlp skips files over max_filesize without raising
-            raise TooLarge(f"This video is too large. Grably downloads files up to {settings.max_bytes // (1024 * 1024)} MB.")
+            raise TooLarge(f"This video is too large. Grabbly downloads files up to {settings.max_bytes // (1024 * 1024)} MB.")
         path = max(files, key=lambda p: p.stat().st_size)
         if path.stat().st_size > settings.max_bytes:
-            raise TooLarge(f"This video is too large. Grably downloads files up to {settings.max_bytes // (1024 * 1024)} MB.")
+            raise TooLarge(f"This video is too large. Grabbly downloads files up to {settings.max_bytes // (1024 * 1024)} MB.")
 
         ext = path.suffix.lower()
         name = f"{platform.name} video"

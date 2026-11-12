@@ -1,4 +1,4 @@
-# Builds the Grably Android app and runs its tests.
+# Builds the Grabbly Android app and runs its tests.
 # Each run's "Artifacts" has grably-debug-apk (install on a phone to try it) and grably-release
 # (the .aab bundle for Google Play, signed when the upload key is in the repository's secrets).
 # A second job runs the app on an Android emulator against a stand-in server (android/ci/fake_server.py).
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       api_base_url:
-        description: "Grably server address, e.g. https://grably-downloader.example.workers.dev"
+        description: "Grabbly server address, e.g. https://grably-downloader.example.workers.dev"
         required: false
         default: ""
 

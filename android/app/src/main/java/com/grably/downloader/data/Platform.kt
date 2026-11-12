@@ -1,6 +1,6 @@
 package com.grably.downloader.data
 
-/** The sites Grably downloads from (the same list as the server's PLATFORMS in server/downloader.py). */
+/** The sites Grabbly downloads from (the same list as the server's PLATFORMS in server/downloader.py). */
 enum class Platform(
     val key: String,
     val displayName: String,

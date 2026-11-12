@@ -1,4 +1,4 @@
-"""A stand-in Grably server for the Android app's on-device tests and store screenshots in CI.
+"""A stand-in Grabbly server for the Android app's on-device tests and store screenshots in CI.
 
 Answers /api/info with sample videos, /api/download with a few hundred KB of bytes, and
 /thumbs/<name>.jpg with the illustrated thumbnails in ci/media/, so the app's whole download
@@ -26,7 +26,7 @@ def opt(id_, kind, fmt, quality, size):
 
 # Picked by a part of the link (keep them distinct: none may contain another); the first is the fallback
 VIDEOS = {
-    "@grably/video/1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grably/video/1234567890", "Grably test clip",
+    "@grably/video/1234567890": video("tiktok", "TikTok", "https://www.tiktok.com/@grably/video/1234567890", "Grabbly test clip",
                         "grably", 12, None, [opt("v720", "video", "MP4", "720p", SIZE),
                                              opt("audio", "audio", "MP3", "Audio only", 40_000)]),
     "ava.travels": video("tiktok", "TikTok", "https://www.tiktok.com/@ava.travels/video/7301234567890",
@@ -72,7 +72,7 @@ class Handler(BaseHTTPRequestHandler):
             200,
             os.urandom(SIZE),
             "video/mp4",
-            {"Content-Disposition": "attachment; filename=\"Grably test clip.mp4\"; filename*=utf-8''Grably%20test%20clip.mp4"},
+            {"Content-Disposition": "attachment; filename=\"Grabbly test clip.mp4\"; filename*=utf-8''Grabbly%20test%20clip.mp4"},
         )
 
 

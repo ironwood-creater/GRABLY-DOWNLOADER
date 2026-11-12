@@ -148,7 +148,7 @@ private val GrablyShapes = Shapes(
 
 private val LocalGrablyColors = staticCompositionLocalOf { LightExtras }
 
-/** Grably's extra colours: `MaterialTheme.grably.muted` and so on. */
+/** Grabbly's extra colours: `MaterialTheme.grably.muted` and so on. */
 val MaterialTheme.grably: GrablyColors
     @Composable
     @ReadOnlyComposable

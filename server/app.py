@@ -1,4 +1,4 @@
-"""Grably web server: serves the website and the video download API.
+"""Grabbly web server: serves the website and the video download API.
 
 Run locally:
     uvicorn server.app:app --reload
@@ -117,7 +117,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Grably", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(title="Grabbly", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 origins = [o.strip() for o in os.environ.get("GRABLY_ALLOWED_ORIGINS", "").split(",") if o.strip()]
 if origins:  # only needed when the website is hosted somewhere else than the API
@@ -206,7 +206,7 @@ async def download(
     if not download_limit.allow(client_ip(request)):
         return error("You're downloading a bit fast. Wait a minute and try again.", 429)
     if download_slots.locked():
-        return error("Grably is busy right now. Try again in a moment.", 503)
+        return error("Grabbly is busy right now. Try again in a moment.", 503)
     # Sweep folders left behind by downloads that were cut off mid-transfer
     await run_in_threadpool(downloader.cleanup_stale, STALE_AFTER)
     async with download_slots:

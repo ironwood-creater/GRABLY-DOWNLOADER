@@ -3,7 +3,7 @@ package com.grably.downloader.data
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Response of POST /api/info on the Grably server. */
+/** Response of POST /api/info on the Grabbly server. */
 @Serializable
 data class VideoInfo(
     val platform: String,

@@ -36,8 +36,8 @@ class FileNamesTest {
     @Test
     fun namesFilesAfterTheTitle() {
         assertEquals("Sunset vs. sunrise.mp4", FileNames.fromTitle("Sunset vs. sunrise", "video/mp4"))
-        assertEquals("Grably audio.mp3", FileNames.fromTitle("???", "audio/mpeg"))
-        assertEquals("Grably video.webm", FileNames.fromTitle("", "video/webm; codecs=vp9"))
+        assertEquals("Grabbly audio.mp3", FileNames.fromTitle("???", "audio/mpeg"))
+        assertEquals("Grabbly video.webm", FileNames.fromTitle("", "video/webm; codecs=vp9"))
         assertEquals("bin", FileNames.extensionFor("application/octet-stream"))
     }
 }

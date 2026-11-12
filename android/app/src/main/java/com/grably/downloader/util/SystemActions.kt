@@ -65,7 +65,7 @@ object SystemActions {
     /**
      * Text on the clipboard if it changed since [lastStamp], with its new timestamp.
      * Only reads the clipboard when something new was copied, so Android's
-     * "Grably pasted from your clipboard" notice appears just once per copied link.
+     * "Grabbly pasted from your clipboard" notice appears just once per copied link.
      */
     fun newClipboardText(context: Context, lastStamp: Long): Pair<String, Long>? {
         val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return null

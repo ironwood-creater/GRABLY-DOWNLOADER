@@ -1,6 +1,6 @@
-# Grably: website and web downloader
+# Grabbly: website and web downloader
 
-The website for **Grably**. It downloads videos from TikTok, Instagram, Facebook, X and Pinterest right in the browser, so it works on any laptop, PC or Mac. The phone app for iPhone and Android is coming soon.
+The website for **Grabbly**. It downloads videos from TikTok, Instagram, Facebook, X and Pinterest right in the browser, so it works on any laptop, PC or Mac. The phone app for iPhone and Android is coming soon.
 
 - **Frontend**: plain HTML, CSS and JavaScript in `public/`, no build step.
 - **Backend**: a small Python server (`server/`) built on [FastAPI](https://fastapi.tiangolo.com/) and [yt-dlp](https://github.com/yt-dlp/yt-dlp). It looks up videos and sends the files to the browser.
@@ -191,7 +191,7 @@ The page is built to stay smooth (60 FPS) and load fast:
 
 ## Free, supported by ads (Google AdSense)
 
-Grably is completely free: there's no subscription or premium plan. The site earns money from Google AdSense ads.
+Grabbly is completely free: there's no subscription or premium plan. The site earns money from Google AdSense ads.
 
 **Read this first:** Google's publisher policies don't allow ads on sites that help people download copyrighted content without permission, and AdSense often rejects social-video downloaders or disables ads on them later. Before applying, read the "Copyrighted material" section of Google's Publisher Policies (search for "Google Publisher Policies" in the [AdSense Help Center](https://support.google.com/adsense)), and keep a backup ad network in mind.
 
@@ -238,4 +238,4 @@ Replace the "coming soon" bits with store buttons: the hero badge (`.pill`), the
 
 ## Credits
 
-Platform icons come from [Simple Icons](https://simpleicons.org/) (CC0). All trademarks belong to their respective owners. Grably is not affiliated with TikTok, Instagram, Facebook, X or Pinterest.
+Platform icons come from [Simple Icons](https://simpleicons.org/) (CC0). All trademarks belong to their respective owners. Grabbly is not affiliated with TikTok, Instagram, Facebook, X or Pinterest.

@@ -1,9 +1,9 @@
-/* Grably: website behavior and the web downloader */
+/* Grabbly: website behavior and the web downloader */
 (function () {
   'use strict';
   window.__grably = true; // tells the fallback in index.html that this script loaded
 
-  /* Platforms Grably supports, matched by hostname. */
+  /* Platforms Grabbly supports, matched by hostname. */
   var PLATFORMS = [
     { name: 'TikTok', cls: 'tiktok', hosts: ['tiktok.com'] },
     { name: 'Instagram', cls: 'instagram', hosts: ['instagram.com', 'instagr.am'] },
@@ -97,7 +97,7 @@
     return res.json().catch(function () { return null; }).then(function (body) {
       if (body && body.error) return body.error;
       if (res.status === 429) return 'You\'re going a bit fast. Wait a minute and try again.';
-      if (res.status === 503) return 'Grably is busy right now. Try again in a moment.';
+      if (res.status === 503) return 'Grabbly is busy right now. Try again in a moment.';
       return 'Something went wrong. Please try again.';
     });
   }
@@ -114,7 +114,7 @@
   }
 
   function setApiState(ok) {
-    if (label) label.textContent = ok ? defaultLabel : 'Check a link: does Grably support it?';
+    if (label) label.textContent = ok ? defaultLabel : 'Check a link: does Grabbly support it?';
     return ok;
   }
 
@@ -156,7 +156,7 @@
 
   function explain(outcome) {
     if (outcome.state === 'unsupported') {
-      setMessage('<span>Grably doesn\'t support <strong>' + escapeHtml(outcome.host) + '</strong> yet. It works with ' + SUPPORTED + '.</span>', 'is-error');
+      setMessage('<span>Grabbly doesn\'t support <strong>' + escapeHtml(outcome.host) + '</strong> yet. It works with ' + SUPPORTED + '.</span>', 'is-error');
     } else if (outcome.state === 'invalid') {
       setMessage('<span>That doesn\'t look like a link. In the social app, tap <strong>Share → Copy link</strong>, then paste it here.</span>', 'is-error');
     } else if (outcome.state === 'empty') {
@@ -261,7 +261,7 @@
       .catch(function (err) {
         var msg = err instanceof ApiError ? err.message
           : err && err.name === 'AbortError' ? 'That took too long. Please try again.'
-          : 'Couldn\'t reach Grably. Check your connection and try again.';
+          : 'Couldn\'t reach Grabbly. Check your connection and try again.';
         setMessage('<span>' + escapeHtml(msg) + '</span>', 'is-error');
       })
       .finally(function () { setLoading(false); });

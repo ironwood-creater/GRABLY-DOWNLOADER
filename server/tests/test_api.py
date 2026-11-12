@@ -84,7 +84,7 @@ def test_thumbnail_proxy_only_serves_signed_urls(client):
 
 def test_website_is_served_but_server_code_is_not(client):
     assert client.get("/").status_code == 200
-    assert "Grably" in client.get("/").text
+    assert "Grabbly" in client.get("/").text
     assert client.get("/assets/css/styles.css").status_code == 200
     for path in ("/server/app.py", "/README.md", "/Dockerfile", "/assets/../server/app.py"):
         assert client.get(path).status_code == 404, path
