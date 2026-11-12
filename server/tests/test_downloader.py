@@ -472,3 +472,13 @@ def test_one_video_of_a_post_can_be_downloaded(monkeypatch, tmp_path):
     with pytest.raises(d.VideoUnavailable):
         d.download("https://www.instagram.com/p/Cx/", "v720", item=3, ydl_factory=lambda o: FakeYDL(o, error="ERROR: removed"))
     assert FakeYDL.last_opts["playlist_items"] == "3"
+
+
+def test_photo_posts_are_not_called_videos():
+    single = d.summarize_items(photo_entry(1) | {"title": "Video by world_record_egg"}, d.platform_for_host("instagram.com"), "u")
+    assert single["title"] == "Photo by world_record_egg"
+    album = d.summarize_items({"_type": "playlist", "title": "Video by ava", "entries": [photo_entry(1), photo_entry(2)]},
+                              d.platform_for_host("instagram.com"), "u")
+    assert album["title"] == "Photos by ava"
+    mixed = d.summarize_items(dict(CAROUSEL, title="Video by ava"), d.platform_for_host("instagram.com"), "u")
+    assert mixed["title"] == "Video by ava"

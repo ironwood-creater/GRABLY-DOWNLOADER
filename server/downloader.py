@@ -531,11 +531,15 @@ def summarize_items(info: dict, platform: Platform, url: str, extra_photos: tupl
         kind = "photos" if len(items) > 1 else "photo"
     else:
         kind = "post" if len(items) > 1 else ("audio" if first["kind"] == "audio" else "video")
+    title = _title(main) or _title(info) or f"{platform.name} {kind}"
+    if all(i["kind"] == "photo" for i in items) and title.startswith("Video by "):
+        # yt-dlp names every Instagram post "Video by <user>", photos too
+        title = ("Photos by " if len(items) > 1 else "Photo by ") + title[len("Video by "):]
     return {
         "platform": platform.key,
         "platform_name": platform.name,
         "url": url,
-        "title": _title(main) or _title(info) or f"{platform.name} {kind}",
+        "title": title,
         "uploader": _uploader(main) or _uploader(info),
         "duration": first["duration"],
         "thumbnail": first["thumbnail"],
