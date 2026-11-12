@@ -4,7 +4,12 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "grably-downloader-server.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "grably-downloader-server.vercel.app"
+        }
+      ],
       "destination": "https://grabbly-downloader-server.vercel.app/:path*",
       "permanent": true
     }
@@ -64,6 +69,27 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/download/(.*)\\.apk",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
         }
       ]
     }
