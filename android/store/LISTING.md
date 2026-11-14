@@ -23,19 +23,19 @@ Grabbly: Video Saver
 **Short description** (80 characters max)
 
 ```
-Save videos from your favorite apps to your phone. Free, fast and no sign-up.
+Save videos and photos from your favorite apps. Free, fast and no sign-up.
 ```
 
 **Full description** (4,000 characters max)
 
 ```
-Grabbly saves videos to your phone in a couple of taps. Copy a video's link, open Grabbly, and pick the quality you want. The video lands in your gallery, ready to watch offline or share.
+Grabbly saves videos and photos to your phone in a couple of taps. Copy a post's link, open Grabbly, and pick the quality you want. It lands in your gallery, ready to watch offline or share.
 
 HOW IT WORKS
 • Copy a link in your favorite app, or tap Share and pick Grabbly
 • Grabbly finds the video and shows the qualities available
 • Choose MP4 in up to 1080p, or save just the sound as MP3
-• Save photos and whole albums from Instagram, Pinterest and X
+• Save photos and whole albums too
 • Paste several links at once and Grabbly downloads them one after another
 • Find everything in Downloads, or in your phone's Gallery
 
@@ -46,16 +46,17 @@ WHY GRABBLY
 • Copy a post's caption and hashtags in one tap
 • Set your favorite quality once, or download copied links automatically
 • Downloads keep going in the background, with a progress notification
-• Saved straight to Movies/Grabbly (videos) and Music/Grabbly (sound)
+• Saved straight to your gallery: Movies/Grabbly (videos), Pictures/Grabbly (photos) and Music/Grabbly (sound)
 • Your download list stays on your phone
 • Light and dark mode
 • No storage permission needed
 
 SUPPORTED LINKS
-Grabbly works with public video links from TikTok, Instagram, Facebook, X, Pinterest, Twitch (clips and past streams) and Tumblr.
+Videos: public links from TikTok, Instagram, Facebook, X, Pinterest, Twitch (clips and past streams) and Tumblr.
+Photos and albums: public posts from Instagram and X.
 
 PLEASE NOTE
-Only download videos you own or have permission to save, and respect the rights of creators. Private videos and videos that need a login can't be downloaded.
+Only download videos and photos you own or have permission to save, and respect the rights of creators. Private posts and posts that need a login can't be downloaded.
 
 Grabbly is an independent app and isn't affiliated with, endorsed by or sponsored by any of the sites it works with. All trademarks belong to their owners.
 ```
